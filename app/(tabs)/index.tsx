@@ -3,495 +3,135 @@ import {
   StyleSheet,
   Text,
   View,
+  ScrollView,
+  SafeAreaView,
   TextInput,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
-  Alert,
-  ScrollView,
-  Modal,
-  SafeAreaView
+  FlatList,
+  Alert
 } from 'react-native';
-import { supabase } from '../../supabase';
-import { useCart } from '../context/CartContext';
+import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
 
-// Paleta de colores de El Rincón del Pan
 const COLORS = {
-  background: '#FFF7EB', // Crema
-  primary: '#5B321B',    // Café principal
-  accent: '#D9764A',     // Terracota
-  secondary: '#E8B565',  // Trigo
-  cardBg: '#FFFFFF',     // Blanco
-  textDark: '#332219',   // Café oscuro
-  textLight: '#8C7365',  // Café claro
+  background: '#FFF7EB',
+  primary: '#5B321B',
+  accent: '#D9764A',
+  secondary: '#E8B565',
+  cardBg: '#FFFFFF',
+  textDark: '#332219',
+  textLight: '#8C7365',
 };
 
-interface Producto {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  imagen_url?: string;
-}
-
-export default function HomeScreen() {
-  const { addToCart } = useCart();
-
-  const [productos, setProductos] = useState<Producto[]>([]);
+export default function ProductosScreen() {
+  const [productos, setProductos] = useState<any[]>([]);
   const [busqueda, setBusqueda] = useState('');
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('Todos');
-  const [cargando, setCargando] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [cargando, setCargando] = useState(true);
 
-  // Formulario nuevo producto
-  const [nombre, setNombre] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [precio, setPrecio] = useState('');
-  const [imagenUrl, setImagenUrl] = useState('');
-
-  const categorias = ['Todos', 'Pan Casero', 'Pan Dulce', 'Repostería'];
-
-  const obtenerUriSegura = (url?: string) => {
-    if (!url || url.trim() === '') {
-      return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500';
-    }
-    return url;
-  };
-
-  // Cargar productos desde Supabase
-  const obtenerProductos = async () => {
+  // Consulta los productos de Supabase
+  const cargarProductos = async () => {
     try {
       setCargando(true);
       const { data, error } = await supabase
         .from('productos')
-        .select('*')
-        .order('id', { ascending: false });
+        .select('*');
 
-      if (error || !data || data.length === 0) {
-        setProductos([
-          {
-            id: 1,
-            nombre: 'Semita Casera',
-            descripcion: 'Tradicional semita de yema recién horneada.',
-            precio: 15.00,
-            imagen_url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500',
-          },
-          {
-            id: 2,
-            nombre: 'Rosquillas de Queso',
-            descripcion: 'Crujientes y tostadas con receta artesanal.',
-            precio: 10.00,
-            imagen_url: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=500',
-          },
-          {
-            id: 3,
-            nombre: 'Torta de Queso',
-            descripcion: 'Suave y cremosa, horneada al día.',
-            precio: 120.00,
-            imagen_url: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=500',
-          },
-        ]);
-      } else {
+      if (error) {
+        console.error('Error al cargar productos:', error.message);
+      } else if (data) {
         setProductos(data);
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error('Error de conexión:', err);
     } finally {
       setCargando(false);
     }
   };
 
   useEffect(() => {
-    obtenerProductos();
+    cargarProductos();
   }, []);
 
-  const agregarProducto = async () => {
-    if (!nombre.trim() || !precio.trim()) {
-      Alert.alert('Campos requeridos', 'Ingresa al menos el nombre y el precio.');
-      return;
-    }
-
-    try {
-      setCargando(true);
-      const { error } = await supabase.from('productos').insert([
-        {
-          nombre,
-          descripcion,
-          precio: parseFloat(precio),
-          imagen_url: imagenUrl.trim() || null,
-        },
-      ]);
-
-      if (error) {
-        Alert.alert('Error', error.message);
-      } else {
-        Alert.alert('Éxito', 'Producto guardado correctamente');
-        setNombre('');
-        setDescripcion('');
-        setPrecio('');
-        setImagenUrl('');
-        setModalVisible(false);
-        obtenerProductos();
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Ocurrió un error al guardar');
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  const productosFiltrados = productos.filter((prod) =>
-    prod.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    prod.descripcion.toLowerCase().includes(busqueda.toLowerCase())
+  // Filtro de búsqueda en tiempo real
+  const productosFiltrados = productos.filter((item) =>
+    (item.nombre || item.title || '').toLowerCase().includes(busqueda.toLowerCase())
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Encabezado */}
-        <View style={styles.header}>
-          <Text style={styles.brandTitle}>El Rincón del Pan</Text>
-          <Text style={styles.brandSubtitle}>Pan fresco, sabor casero ♡</Text>
-        </View>
+      {/* Encabezado */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Menú Recién Horneado</Text>
+        <Text style={styles.headerSubtitle}>El Rincón del Pan</Text>
+      </View>
 
-        {/* Banner Promocional */}
-        <View style={styles.banner}>
-          <Text style={styles.bannerText}>Pan recién horneado todos los días</Text>
-        </View>
-
-        {/* Búsqueda */}
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Buscar semitas, rosquillas, tortas..."
-            placeholderTextColor={COLORS.textLight}
-            value={busqueda}
-            onChangeText={setBusqueda}
-          />
-        </View>
-
-        {/* Categorías */}
-        <View style={styles.categoriesContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {categorias.map((cat, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.categoryChip,
-                  categoriaSeleccionada === cat && styles.categoryChipActive,
-                ]}
-                onPress={() => setCategoriaSeleccionada(cat)}
-              >
-                <Text
-                  style={[
-                    styles.categoryText,
-                    categoriaSeleccionada === cat && styles.categoryTextActive,
-                  ]}
-                >
-                  {cat}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Encabezado del catálogo y botón para agregar */}
-        <View style={styles.actionRow}>
-          <Text style={styles.sectionTitle}>Nuestros Productos</Text>
-          <TouchableOpacity
-            style={styles.addNavButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.addNavButtonText}>+ Agregar</Text>
+      {/* Buscador (Visual -> Buscador) */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search-outline" size={20} color={COLORS.textLight} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar pan, semita, rosquillas..."
+          placeholderTextColor={COLORS.textLight}
+          value={busqueda}
+          onChangeText={setBusqueda}
+        />
+        {busqueda.length > 0 && (
+          <TouchableOpacity onPress={() => setBusqueda('')}>
+            <Ionicons name="close-circle" size={18} color={COLORS.textLight} />
           </TouchableOpacity>
-        </View>
-
-        {/* Lista de Productos */}
-        {cargando && productos.length === 0 ? (
-          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 20 }} />
-        ) : productosFiltrados.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay productos registrados aún.</Text>
-          </View>
-        ) : (
-          <View style={styles.gridContainer}>
-            {productosFiltrados.map((prod) => (
-              <View key={prod.id} style={styles.card}>
-                <Image
-                  source={{ uri: obtenerUriSegura(prod.imagen_url) }}
-                  style={styles.cardImage}
-                />
-                <View style={styles.cardContent}>
-                  <Text style={styles.cardTitle}>{prod.nombre}</Text>
-                  <Text style={styles.cardDescription} numberOfLines={2}>
-                    {prod.descripcion || 'Sin descripción'}
-                  </Text>
-                  <Text style={styles.cardPrice}>L. {prod.precio.toFixed(2)}</Text>
-
-                  {/* Botón que conecta directamente con el Carrito */}
-                  <TouchableOpacity
-                    style={styles.buyButton}
-                    onPress={() => {
-                      addToCart(prod);
-                      Alert.alert('¡Agregado!', `${prod.nombre} se añadió al carrito.`);
-                    }}
-                  >
-                    <Text style={styles.buyButtonText}>+ Carrito</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-          </View>
         )}
-      </ScrollView>
+      </View>
 
-      {/* Modal Agregar Producto */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Nuevo Producto</Text>
+      {/* Listado de Productos */}
+      {cargando ? (
+        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
+      ) : productosFiltrados.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No se encontraron productos.</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={productosFiltrados}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.listContainer}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={styles.cardInfo}>
+                <Text style={styles.productName}>{item.nombre || item.title}</Text>
+                <Text style={styles.productDesc}>{item.descripcion || 'Fresco y artesanal'}</Text>
+                <Text style={styles.productPrice}>L. {parseFloat(item.precio || 0).toFixed(2)}</Text>
+              </View>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Nombre del producto"
-              value={nombre}
-              onChangeText={setNombre}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Descripción"
-              value={descripcion}
-              onChangeText={setDescripcion}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Precio (L.)"
-              keyboardType="numeric"
-              value={precio}
-              onChangeText={setPrecio}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="URL de Imagen (opcional)"
-              value={imagenUrl}
-              onChangeText={setImagenUrl}
-            />
-
-            <View style={styles.modalActions}>
+              {/* Botón Agregar (Visual -> Botones) */}
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: '#ccc' }]}
-                onPress={() => setModalVisible(false)}
+                style={styles.addButton}
+                onPress={() => Alert.alert('Éxito', `${item.nombre || 'Producto'} agregado al carrito`)}
               >
-                <Text style={{ fontWeight: 'bold' }}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: COLORS.primary }]}
-                onPress={agregarProducto}
-              >
-                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Guardar</Text>
+                <Ionicons name="add" size={20} color="#FFF" />
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </Modal>
+          )}
+        />
+      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
-    paddingTop: 16,
-    paddingBottom: 8,
-    alignItems: 'center',
-  },
-  brandTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  brandSubtitle: {
-    fontSize: 14,
-    color: COLORS.accent,
-    marginTop: 2,
-  },
-  banner: {
-    backgroundColor: COLORS.secondary,
-    marginHorizontal: 16,
-    marginVertical: 10,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  bannerText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  searchContainer: {
-    paddingHorizontal: 16,
-    marginVertical: 8,
-  },
-  searchInput: {
-    backgroundColor: COLORS.cardBg,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-    color: COLORS.textDark,
-  },
-  categoriesContainer: {
-    paddingHorizontal: 16,
-    marginVertical: 8,
-  },
-  categoryChip: {
-    backgroundColor: COLORS.cardBg,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-  },
-  categoryChipActive: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-  },
-  categoryText: {
-    color: COLORS.textDark,
-    fontWeight: '500',
-  },
-  categoryTextActive: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  addNavButton: {
-    backgroundColor: COLORS.accent,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  addNavButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 20,
-  },
-  card: {
-    backgroundColor: COLORS.cardBg,
-    width: '48%',
-    borderRadius: 12,
-    marginBottom: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#EFEFEF',
-  },
-  cardImage: {
-    width: '100%',
-    height: 110,
-    backgroundColor: COLORS.secondary,
-  },
-  cardContent: {
-    padding: 10,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.textDark,
-  },
-  cardDescription: {
-    fontSize: 11,
-    color: COLORS.textLight,
-    marginVertical: 4,
-  },
-  cardPrice: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.accent,
-    marginBottom: 6,
-  },
-  buyButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 6,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  buyButtonText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  emptyContainer: {
-    padding: 30,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: COLORS.textLight,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: COLORS.cardBg,
-    borderRadius: 15,
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  input: {
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.secondary,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 12,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 5,
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: { paddingTop: 16, paddingBottom: 12, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: COLORS.secondary },
+  headerTitle: { fontSize: 22, fontWeight: 'bold', color: COLORS.primary },
+  headerSubtitle: { fontSize: 13, color: COLORS.accent },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.cardBg, margin: 16, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: COLORS.secondary },
+  searchInput: { flex: 1, marginLeft: 8, color: COLORS.textDark, fontSize: 14 },
+  listContainer: { paddingHorizontal: 16, paddingBottom: 20 },
+  card: { flexDirection: 'row', backgroundColor: COLORS.cardBg, borderRadius: 12, padding: 14, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: '#EFEFEF', elevation: 2 },
+  cardInfo: { flex: 1 },
+  productName: { fontSize: 16, fontWeight: 'bold', color: COLORS.primary },
+  productDesc: { fontSize: 12, color: COLORS.textLight, marginVertical: 4 },
+  productPrice: { fontSize: 14, fontWeight: 'bold', color: COLORS.accent },
+  addButton: { backgroundColor: COLORS.accent, borderRadius: 20, width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  emptyContainer: { alignItems: 'center', marginTop: 40 },
+  emptyText: { color: COLORS.textLight, fontSize: 14 }
 });
