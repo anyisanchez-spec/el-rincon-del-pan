@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   ScrollView,
   SafeAreaView,
-  TouchableOpacity
+  TouchableOpacity,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
 
 const COLORS = {
   background: '#FFF7EB', // Crema
@@ -22,26 +24,40 @@ const COLORS = {
 };
 
 export default function PedidosScreen() {
-  const pedidosEjemplo = [
-    {
-      id: '#1024',
-      fecha: '26 de Octubre, 2026',
-      items: '2x Semita Casera, 1x Torta de Queso',
-      total: 150.00,
-      estado: 'En preparación',
-      colorEstado: COLORS.warning,
-      icon: 'time-outline',
-    },
-    {
-      id: '#1019',
-      fecha: '24 de Octubre, 2026',
-      items: '5x Rosquillas de Queso',
-      total: 65.00,
-      estado: 'Entregado',
-      colorEstado: COLORS.success,
-      icon: 'checkmark-circle-outline',
-    },
-  ];
+  const [pedidos, setPedidos] = useState<any[]>([]);
+  const [cargando, setCargando] = useState(true);
+
+  // Consulta para traer los pedidos en tiempo real desde Supabase
+  const obtenerPedidos = async () => {
+    try {
+      setCargando(true);
+      const { data, error } = await supabase
+        .from('pedidos')
+        .select('*')
+        .order('id', { ascending: false });
+
+      if (error) {
+        console.error('Error obteniendo pedidos:', error.message);
+      } else if (data) {
+        setPedidos(data);
+      }
+    } catch (err) {
+      console.error('Error inesperado:', err);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    obtenerPedidos();
+  }, []);
+
+  const obtenerColorEstado = (estado?: string) => {
+    if (estado === 'Entregado' || estado === 'Completado') {
+      return COLORS.success;
+    }
+    return COLORS.warning;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -54,31 +70,43 @@ export default function PedidosScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>Historial y Estado</Text>
 
-        {pedidosEjemplo.map((pedido) => (
-          <View key={pedido.id} style={styles.orderCard}>
-            <View style={styles.cardHeader}>
-              <View style={styles.idRow}>
-                <Ionicons name="receipt-outline" size={20} color={COLORS.primary} />
-                <Text style={styles.orderId}>Pedido {pedido.id}</Text>
+        {cargando ? (
+          <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 20 }} />
+        ) : pedidos.length === 0 ? (
+          <Text style={styles.emptyText}>No hay pedidos registrados en Supabase.</Text>
+        ) : (
+          pedidos.map((pedido) => {
+            const estadoTexto = pedido.estado || 'En preparación';
+            const colorEstado = obtenerColorEstado(estadoTexto);
+            const total = typeof pedido.total === 'number' ? pedido.total : parseFloat(pedido.total || 0);
+
+            return (
+              <View key={pedido.id} style={styles.orderCard}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.idRow}>
+                    <Ionicons name="receipt-outline" size={20} color={COLORS.primary} />
+                    <Text style={styles.orderId}>Pedido #{pedido.id}</Text>
+                  </View>
+                  <View style={[styles.statusBadge, { backgroundColor: colorEstado }]}>
+                    <Text style={styles.statusText}>{estadoTexto}</Text>
+                  </View>
+                </View>
+
+                <Text style={styles.orderDate}>{pedido.fecha || pedido.created_at || 'Sin fecha'}</Text>
+                <Text style={styles.orderItems}>{pedido.items || pedido.productos || 'Sin detalles'}</Text>
+
+                <View style={styles.cardFooter}>
+                  <Text style={styles.totalLabel}>Total pagado:</Text>
+                  <Text style={styles.totalValue}>L. {isNaN(total) ? '0.00' : total.toFixed(2)}</Text>
+                </View>
+
+                <TouchableOpacity style={styles.detailButton}>
+                  <Text style={styles.detailButtonText}>Ver detalle del pedido</Text>
+                </TouchableOpacity>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: pedido.colorEstado }]}>
-                <Text style={styles.statusText}>{pedido.estado}</Text>
-              </View>
-            </View>
-
-            <Text style={styles.orderDate}>{pedido.fecha}</Text>
-            <Text style={styles.orderItems}>{pedido.items}</Text>
-
-            <View style={styles.cardFooter}>
-              <Text style={styles.totalLabel}>Total pagado:</Text>
-              <Text style={styles.totalValue}>L. {pedido.total.toFixed(2)}</Text>
-            </View>
-
-            <TouchableOpacity style={styles.detailButton}>
-              <Text style={styles.detailButtonText}>Ver detalle del pedido</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
+            );
+          })
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -116,6 +144,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.primary,
     marginBottom: 12,
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 30,
+    fontSize: 14,
+    color: COLORS.textLight,
   },
   orderCard: {
     backgroundColor: COLORS.cardBg,
