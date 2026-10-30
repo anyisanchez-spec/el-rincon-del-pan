@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Image,
   SafeAreaView,
   StatusBar
 } from 'react-native';
@@ -18,19 +17,7 @@ interface Producto {
   id: string | number;
   nombre?: string;
   precio?: number | string;
-  descripcion?: string;
-  imagen_url?: string;
 }
-
-const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=300&auto=format&fit=crop';
-
-// Función validadora para prevenir errores de URI parsing
-const getValidImageUrl = (url?: string) => {
-  if (typeof url === 'string' && url.trim().length > 0 && (url.startsWith('http://') || url.startsWith('https://'))) {
-    return url.trim();
-  }
-  return DEFAULT_IMAGE;
-};
 
 export default function HomeScreen() {
   const [products, setProducts] = useState<Producto[]>([]);
@@ -72,59 +59,37 @@ export default function HomeScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: Producto }) => {
-    const safeImageUri = getValidImageUrl(item.imagen_url);
-
-    return (
-      <View style={styles.card}>
-        <Image
-          source={{ uri: safeImageUri }}
-          style={styles.productImage}
-          resizeMode="cover"
-        />
-        <View style={styles.cardContent}>
-          <View>
-            <Text style={styles.productName} numberOfLines={1}>
-              {item.nombre || 'Producto'}
-            </Text>
-            {item.descripcion ? (
-              <Text style={styles.productDescription} numberOfLines={2}>
-                {item.descripcion}
-              </Text>
-            ) : null}
-          </View>
-
-          <View style={styles.cardFooter}>
-            <Text style={styles.productPrice}>${item.precio || '0.00'}</Text>
-            <TouchableOpacity
-              style={styles.button}
-              activeOpacity={0.8}
-              onPress={() => Alert.alert('¡Añadido!', `${item.nombre} fue agregado a tu orden.`)}
-            >
-              <Text style={styles.buttonText}>+ Agregar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+  const renderItem = ({ item }: { item: Producto }) => (
+    <View style={styles.card}>
+      <View style={styles.cardInfo}>
+        <Text style={styles.productName}>{item.nombre || 'Producto'}</Text>
+        <Text style={styles.productPrice}>${item.precio || '0'}</Text>
       </View>
-    );
-  };
+      <TouchableOpacity
+        style={styles.button}
+        activeOpacity={0.8}
+        onPress={() => Alert.alert('¡Añadido!', `${item.nombre} fue agregado.`)}
+      >
+        <Text style={styles.buttonText}>Agregar</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Cabecera */}
+      {/* Título original */}
       <View style={styles.headerContainer}>
         <Text style={styles.title}>El Rincón del Pan 🥖</Text>
-        <Text style={styles.subtitle}>Panadería & Pastelería Artesanal</Text>
       </View>
 
       {/* Buscador */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="🔍 Buscar pan, rosquillas, postres..."
-          placeholderTextColor="#94A3B8"
+          placeholder="Buscar productos..."
+          placeholderTextColor="#a0a0a0"
           value={searchQuery}
           onChangeText={handleSearch}
         />
@@ -132,10 +97,7 @@ export default function HomeScreen() {
 
       {/* Lista */}
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#D35400" />
-          <Text style={styles.loadingText}>Cargando delicias...</Text>
-        </View>
+        <ActivityIndicator size="large" color="#d35400" style={{ marginTop: 30 }} />
       ) : (
         <FlatList
           data={filteredProducts}
@@ -144,9 +106,7 @@ export default function HomeScreen() {
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No se encontraron productos.</Text>
-            </View>
+            <Text style={styles.emptyText}>No se encontraron productos.</Text>
           }
         />
       )}
@@ -157,117 +117,82 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F6F7F9',
   },
   headerContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
+    alignItems: 'center',
+    paddingTop: 16,
+    paddingBottom: 10,
   },
   title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#64748B',
-    marginTop: 2,
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1E293B',
   },
   searchContainer: {
-    paddingHorizontal: 20,
-    marginVertical: 10,
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   searchInput: {
     height: 48,
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 15,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    color: '#333',
   },
   listContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    flexDirection: 'row',
-    marginBottom: 14,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  productImage: {
-    width: 100,
-    height: 105,
-    backgroundColor: '#E2E8F0',
-  },
-  cardContent: {
-    flex: 1,
-    padding: 12,
-    justifyContent: 'space-between',
-  },
-  productName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1E293B',
-  },
-  productDescription: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 3,
-  },
-  cardFooter: {
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 8,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  cardInfo: {
+    flex: 1,
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 4,
   },
   productPrice: {
-    fontSize: 17,
-    fontWeight: '800',
+    fontSize: 15,
+    fontWeight: 'bold',
     color: '#D35400',
   },
   button: {
     backgroundColor: '#D35400',
-    paddingVertical: 7,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 22,
     borderRadius: 10,
   },
   buttonText: {
     color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#64748B',
+    fontWeight: 'bold',
     fontSize: 14,
   },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 40,
-  },
   emptyText: {
-    color: '#94A3B8',
+    textAlign: 'center',
+    color: '#888',
+    marginTop: 30,
     fontSize: 15,
   },
 });
