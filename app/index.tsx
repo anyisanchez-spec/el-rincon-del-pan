@@ -1,143 +1,175 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
+  FlatList,
   TextInput,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
-  Alert,
-  ScrollView,
-  Modal,
-  SafeAreaView
+  Alert
 } from 'react-native';
-import { router } from 'expo-router'; // <-- 1. Importación para la navegación
-import { supabase } from '../supabase';
-
-// Paleta de colores de El Rincón del Pan
-const COLORS = {
-  background: '#FFF7EB', // Crema
-  primary: '#5B321B',    // Café principal
-  accent: '#D9764A',     // Terracota
-  secondary: '#E8B565',  // Trigo
-  cardBg: '#FFFFFF',     // Blanco
-  textDark: '#332219',   // Café oscuro
-  textLight: '#8C7365',  // Café claro
-};
+import { supabase } from '../lib/supabase';
 
 interface Producto {
-  id: number;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  imagen_url?: string;
+  id: string | number;
+  nombre?: string;
+  precio?: number | string;
 }
 
-export default function WelcomeScreen() {
-  const [productos, setProductos] = useState<Producto[]>([]);
-  const [cargando, setCargando] = useState(false);
+export default function HomeScreen() {
+  const [products, setProducts] = useState<Producto[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Producto[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  // Validación de imagen
-  const obtenerUriSegura = (url?: string) => {
-    if (!url || url.trim() === '') {
-      return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500';
+  // 1. Cargar datos con manejo de errores (QA)
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.from('productos').select('*');
+
+      if (error) throw error;
+
+      setProducts(data || []);
+      setFilteredProducts(data || []);
+    } catch (error: any) {
+      Alert.alert('Error QA', 'No se pudieron cargar los productos: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-    return url;
   };
 
-  return (
-    <SafeAreaView style={styles.welcomeSafeArea}>
-      <View style={styles.welcomeContainer}>
-        {/* Encabezado con marca */}
-        <View style={styles.welcomeHeader}>
-          <Text style={styles.welcomeTitle}>El Rincón del Pan</Text>
-          <Text style={styles.welcomeSubtitle}>Pan fresco, sabor casero ♡</Text>
-        </View>
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-        {/* Imagen central artesanal */}
-        <View style={styles.welcomeImageContainer}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800' }}
-            style={styles.welcomeImage}
-            resizeMode="cover"
-          />
-        </View>
+  // 2. Funcionalidad del Buscador
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text.trim() === '') {
+      setFilteredProducts(products);
+    } else {
+      const filtered = products.filter((item) =>
+        item.nombre?.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredProducts(filtered);
+    }
+  };
 
-        {/* Botón Comenzar -> Redirige a las Pestañas (Tabs) */}
-        <View style={styles.welcomeFooter}>
-          <TouchableOpacity
-            style={styles.comenzarButton}
-            onPress={() => router.replace('/(tabs)')} // <-- 2. Navega directamente al menú inferior
-          >
-            <Text style={styles.comenzarButtonText}>Comenzar</Text>
-          </TouchableOpacity>
-        </View>
+  const renderItem = ({ item }: { item: Producto }) => (
+    <View style={styles.card}>
+      <View style={styles.cardInfo}>
+        <Text style={styles.productName}>{item.nombre || 'Producto'}</Text>
+        <Text style={styles.productPrice}>${item.precio || '0.00'}</Text>
       </View>
-    </SafeAreaView>
+      <TouchableOpacity 
+        style={styles.button}
+        onPress={() => Alert.alert('Éxito', `${item.nombre} agregado`)}
+      >
+        <Text style={styles.buttonText}>Agregar</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>El Rincón del Pan 🥖</Text>
+
+      {/* Buscador */}
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Buscar productos..."
+        placeholderTextColor="#888"
+        value={searchQuery}
+        onChangeText={handleSearch}
+      />
+
+      {/* Indicador de Carga / Lista de productos */}
+      {loading ? (
+        <ActivityIndicator size="large" color="#d35400" style={{ marginTop: 20 }} />
+      ) : (
+        <FlatList
+          data={filteredProducts}
+          keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+          renderItem={renderItem}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>No se encontraron productos.</Text>
+          }
+          contentContainerStyle={{ paddingBottom: 20 }}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  welcomeSafeArea: {
+  container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 16,
+    paddingTop: 50,
   },
-  welcomeContainer: {
-    flex: 1,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  searchInput: {
+    height: 45,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    marginBottom: 16,
+  },
+  card: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 10,
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 30,
-    paddingHorizontal: 20,
-  },
-  welcomeHeader: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  welcomeTitle: {
-    fontSize: 34,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-  },
-  welcomeSubtitle: {
-    fontSize: 16,
-    color: COLORS.accent,
-    marginTop: 6,
-  },
-  welcomeImageContainer: {
-    width: '100%',
-    height: 340,
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginVertical: 20,
-    elevation: 4,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
+    marginBottom: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
-    shadowRadius: 6,
+    shadowRadius: 1.41,
   },
-  welcomeImage: {
-    width: '100%',
-    height: '100%',
+  cardInfo: {
+    flex: 1,
   },
-  welcomeFooter: {
-    width: '100%',
-    paddingHorizontal: 20,
-    marginBottom: 10,
+  productName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
   },
-  comenzarButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 16,
-    borderRadius: 25,
-    alignItems: 'center',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-  },
-  comenzarButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
+  productPrice: {
+    fontSize: 14,
+    color: '#e67e22',
     fontWeight: 'bold',
+    marginTop: 4,
+  },
+  button: {
+    backgroundColor: '#d35400',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#7f8c8d',
+    marginTop: 30,
+    fontSize: 16,
   },
 });
