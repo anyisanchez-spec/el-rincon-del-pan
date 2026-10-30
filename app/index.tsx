@@ -8,8 +8,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
   SafeAreaView,
-  StatusBar
+  StatusBar,
+  ScrollView,
+  Dimensions
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 
@@ -17,15 +20,31 @@ interface Producto {
   id: string | number;
   nombre?: string;
   precio?: number | string;
+  categoria?: string;
+  imagen_url?: string;
 }
+
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - 48) / 2;
+
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=400&auto=format&fit=crop';
+
+const getValidImageUrl = (url?: string) => {
+  if (typeof url === 'string' && url.trim().length > 0 && (url.startsWith('http://') || url.startsWith('https://'))) {
+    return url.trim();
+  }
+  return DEFAULT_IMAGE;
+};
 
 export default function HomeScreen() {
   const [products, setProducts] = useState<Producto[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Producto[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [loading, setLoading] = useState(true);
 
-  // Cargar productos desde Supabase
+  const categories = ['Todos', 'Pan', 'Repostería', 'Rosquillas'];
+
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -36,7 +55,7 @@ export default function HomeScreen() {
       setProducts(data || []);
       setFilteredProducts(data || []);
     } catch (error: any) {
-      Alert.alert('Error', 'No se pudieron cargar los productos: ' + error.message);
+      Alert.alert('Error QA', 'No se pudieron cargar los productos: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -46,67 +65,118 @@ export default function HomeScreen() {
     fetchProducts();
   }, []);
 
-  // Buscador
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === '') {
-      setFilteredProducts(products);
-    } else {
-      const filtered = products.filter((item) =>
-        item.nombre?.toLowerCase().includes(text.toLowerCase())
-      );
-      setFilteredProducts(filtered);
-    }
-  };
+  useEffect(() => {
+    let result = products;
 
-  const renderItem = ({ item }: { item: Producto }) => (
-    <View style={styles.card}>
-      <View style={styles.cardInfo}>
-        <Text style={styles.productName}>{item.nombre || 'Producto'}</Text>
-        <Text style={styles.productPrice}>${item.precio || '0'}</Text>
-      </View>
+    if (selectedCategory !== 'Todos') {
+      result = result.filter(
+        (item) => item.categoria?.toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
+
+    if (searchQuery.trim() !== '') {
+      result = result.filter((item) =>
+        item.nombre?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredProducts(result);
+  }, [searchQuery, selectedCategory, products]);
+
+  const renderProductCard = ({ item }: { item: Producto }) => {
+    const safeImageUri = getValidImageUrl(item.imagen_url);
+    const numPrice = typeof item.precio === 'number' ? item.precio : parseFloat(item.precio as string) || 0;
+    const formattedPrice = numPrice.toFixed(2);
+
+    return (
       <TouchableOpacity
-        style={styles.button}
-        activeOpacity={0.8}
-        onPress={() => Alert.alert('¡Añadido!', `${item.nombre} fue agregado.`)}
+        style={styles.card}
+        activeOpacity={0.85}
+        onPress={() => Alert.alert('Producto', `${item.nombre}\nPrecio: L. ${formattedPrice}`)}
       >
-        <Text style={styles.buttonText}>Agregar</Text>
+        <Image
+          source={{ uri: safeImageUri }}
+          style={styles.productImage}
+          resizeMode="cover"
+        />
+        <View style={styles.cardContent}>
+          <Text style={styles.productName} numberOfLines={1}>
+            {item.nombre || 'Producto'}
+          </Text>
+          <Text style={styles.productPrice}>L. {formattedPrice}</Text>
+        </View>
       </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Título original */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>El Rincón del Pan 🥖</Text>
+      {/* Título de la pantalla */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Productos</Text>
       </View>
 
       {/* Buscador */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Buscar productos..."
-          placeholderTextColor="#a0a0a0"
+          placeholder="🔍 Buscar productos..."
+          placeholderTextColor="#A08C7D"
           value={searchQuery}
-          onChangeText={handleSearch}
+          onChangeText={setSearchQuery}
         />
       </View>
 
-      {/* Lista */}
+      {/* Filtros de Categorías */}
+      <View style={styles.categoriesWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContainer}
+        >
+          {categories.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[
+                styles.categoryChip,
+                selectedCategory === cat && styles.categoryChipActive,
+              ]}
+              onPress={() => setSelectedCategory(cat)}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === cat && styles.categoryTextActive,
+                ]}
+              >
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Catálogo en cuadrícula */}
       {loading ? (
-        <ActivityIndicator size="large" color="#d35400" style={{ marginTop: 30 }} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6C3B18" />
+          <Text style={styles.loadingText}>Cargando productos...</Text>
+        </View>
       ) : (
         <FlatList
           data={filteredProducts}
           keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContainer}
+          renderItem={renderProductCard}
+          numColumns={2}
+          columnWrapperStyle={styles.rowWrapper}
+          contentContainerStyle={styles.gridContainer}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No se encontraron productos.</Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No hay productos disponibles.</Text>
+            </View>
           }
         />
       )}
@@ -117,82 +187,114 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F7F9',
+    backgroundColor: '#FFF9F5',
   },
-  headerContainer: {
-    alignItems: 'center',
+  header: {
+    paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 10,
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#1E293B',
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#4A2810',
   },
   searchContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    paddingHorizontal: 20,
+    marginBottom: 12,
   },
   searchInput: {
-    height: 48,
+    height: 46,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 15,
+    borderRadius: 23,
+    paddingHorizontal: 18,
+    fontSize: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    color: '#333',
+    borderColor: '#E8D8CD',
+    color: '#4A2810',
   },
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+  categoriesWrapper: {
+    marginBottom: 16,
+  },
+  categoriesContainer: {
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  categoryChip: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#E8D8CD',
+  },
+  categoryChipActive: {
+    backgroundColor: '#8B4513',
+  },
+  categoryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6C3B18',
+  },
+  categoryTextActive: {
+    color: '#FFFFFF',
+  },
+  gridContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+  },
+  rowWrapper: {
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   card: {
+    width: CARD_WIDTH,
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    borderRadius: 16,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#F0E2D8',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  cardInfo: {
-    flex: 1,
+  productImage: {
+    width: '100%',
+    height: 120,
+    backgroundColor: '#F5ECE5',
+  },
+  cardContent: {
+    padding: 10,
+    alignItems: 'flex-start',
   },
   productName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#4A2810',
     marginBottom: 4,
   },
   productPrice: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#D35400',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#8B4513',
   },
-  button: {
-    backgroundColor: '#D35400',
-    paddingVertical: 10,
-    paddingHorizontal: 22,
-    borderRadius: 10,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+  loadingText: {
+    marginTop: 10,
+    color: '#8B4513',
     fontSize: 14,
   },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 40,
+  },
   emptyText: {
-    textAlign: 'center',
-    color: '#888',
-    marginTop: 30,
-    fontSize: 15,
+    color: '#A08C7D',
+    fontSize: 14,
   },
 });
