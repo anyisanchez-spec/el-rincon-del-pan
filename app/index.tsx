@@ -22,6 +22,16 @@ interface Producto {
   imagen_url?: string;
 }
 
+const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=300&auto=format&fit=crop';
+
+// Función validadora para prevenir errores de URI parsing
+const getValidImageUrl = (url?: string) => {
+  if (typeof url === 'string' && url.trim().length > 0 && (url.startsWith('http://') || url.startsWith('https://'))) {
+    return url.trim();
+  }
+  return DEFAULT_IMAGE;
+};
+
 export default function HomeScreen() {
   const [products, setProducts] = useState<Producto[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Producto[]>([]);
@@ -49,7 +59,7 @@ export default function HomeScreen() {
     fetchProducts();
   }, []);
 
-  // Buscador en tiempo real
+  // Buscador
   const handleSearch = (text: string) => {
     setSearchQuery(text);
     if (text.trim() === '') {
@@ -62,47 +72,48 @@ export default function HomeScreen() {
     }
   };
 
-  // Imagen por defecto en caso de que no haya imagen registrada en Supabase
-  const defaultImage = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=300&auto=format&fit=crop';
+  const renderItem = ({ item }: { item: Producto }) => {
+    const safeImageUri = getValidImageUrl(item.imagen_url);
 
-  const renderItem = ({ item }: { item: Producto }) => (
-    <View style={styles.card}>
-      <Image
-        source={{ uri: item.imagen_url || defaultImage }}
-        style={styles.productImage}
-        resizeMode="cover"
-      />
-      <View style={styles.cardContent}>
-        <View>
-          <Text style={styles.productName} numberOfLines={1}>
-            {item.nombre || 'Producto'}
-          </Text>
-          {item.descripcion ? (
-            <Text style={styles.productDescription} numberOfLines={2}>
-              {item.descripcion}
+    return (
+      <View style={styles.card}>
+        <Image
+          source={{ uri: safeImageUri }}
+          style={styles.productImage}
+          resizeMode="cover"
+        />
+        <View style={styles.cardContent}>
+          <View>
+            <Text style={styles.productName} numberOfLines={1}>
+              {item.nombre || 'Producto'}
             </Text>
-          ) : null}
-        </View>
+            {item.descripcion ? (
+              <Text style={styles.productDescription} numberOfLines={2}>
+                {item.descripcion}
+              </Text>
+            ) : null}
+          </View>
 
-        <View style={styles.cardFooter}>
-          <Text style={styles.productPrice}>${item.precio || '0.00'}</Text>
-          <TouchableOpacity
-            style={styles.button}
-            activeOpacity={0.8}
-            onPress={() => Alert.alert('¡Añadido!', `${item.nombre} fue agregado a tu orden.`)}
-          >
-            <Text style={styles.buttonText}>+ Agregar</Text>
-          </TouchableOpacity>
+          <View style={styles.cardFooter}>
+            <Text style={styles.productPrice}>${item.precio || '0.00'}</Text>
+            <TouchableOpacity
+              style={styles.button}
+              activeOpacity={0.8}
+              onPress={() => Alert.alert('¡Añadido!', `${item.nombre} fue agregado a tu orden.`)}
+            >
+              <Text style={styles.buttonText}>+ Agregar</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Título de la app */}
+      {/* Cabecera */}
       <View style={styles.headerContainer}>
         <Text style={styles.title}>El Rincón del Pan 🥖</Text>
         <Text style={styles.subtitle}>Panadería & Pastelería Artesanal</Text>
@@ -119,7 +130,7 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* Estado de Carga / Lista de Productos */}
+      {/* Lista */}
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#D35400" />
