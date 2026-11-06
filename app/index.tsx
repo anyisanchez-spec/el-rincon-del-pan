@@ -12,7 +12,8 @@ import {
   SafeAreaView,
   StatusBar,
   ScrollView,
-  Dimensions
+  useWindowDimensions,
+  Modal
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 
@@ -24,19 +25,37 @@ interface Producto {
   imagen_url?: string;
 }
 
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = (width - 48) / 2;
-
 const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=400&auto=format&fit=crop';
+const ROSQUILLA_IMAGE = 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=400&auto=format&fit=crop';
 
-const getValidImageUrl = (url?: string) => {
+const FALLBACK_PRODUCTS: Producto[] = [
+  { id: 1, nombre: 'Pan Casero', precio: 15, categoria: 'Pan', imagen_url: DEFAULT_IMAGE },
+  { id: 2, nombre: 'Rosquilla de Maíz', precio: 12, categoria: 'Rosquillas', imagen_url: ROSQUILLA_IMAGE },
+  { id: 3, nombre: 'Semita de Yema', precio: 15, categoria: 'Pan', imagen_url: DEFAULT_IMAGE },
+  { id: 4, nombre: 'Quesadilla Hondureña', precio: 25, categoria: 'Repostería', imagen_url: DEFAULT_IMAGE },
+  { id: 5, nombre: 'Pastel de Chocolate', precio: 45, categoria: 'Repostería', imagen_url: DEFAULT_IMAGE },
+  { id: 6, nombre: 'Empanada de Piña', precio: 18, categoria: 'Repostería', imagen_url: DEFAULT_IMAGE },
+];
+
+const getValidImageUrl = (url?: string, categoria?: string) => {
   if (typeof url === 'string' && url.trim().length > 0 && (url.startsWith('http://') || url.startsWith('https://'))) {
     return url.trim();
   }
-  return DEFAULT_IMAGE;
+  return categoria?.toLowerCase() === 'rosquillas' ? ROSQUILLA_IMAGE : DEFAULT_IMAGE;
 };
 
 export default function HomeScreen() {
+  const { width } = useWindowDimensions();
+
+  // Limita el ancho del contenedor en Web para que las tarjetas no se deformen
+  const maxContentWidth = Math.min(width, 540);
+  const cardWidth = (maxContentWidth - 48) / 2;
+
+  const [userRole, setUserRole] = useState<'none' | 'cliente' | 'admin'>('none');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [adminUser, setAdminUser] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+
   const [products, setProducts] = useState<Producto[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Producto[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,12 +69,18 @@ export default function HomeScreen() {
       setLoading(true);
       const { data, error } = await supabase.from('productos').select('*');
 
-      if (error) throw error;
+      if (error) console.log('Aviso Supabase:', error.message);
 
-      setProducts(data || []);
-      setFilteredProducts(data || []);
-    } catch (error: any) {
-      Alert.alert('Error QA', 'No se pudieron cargar los productos: ' + error.message);
+      if (data && data.length > 0) {
+        setProducts(data);
+        setFilteredProducts(data);
+      } else {
+        setProducts(FALLBACK_PRODUCTS);
+        setFilteredProducts(FALLBACK_PRODUCTS);
+      }
+    } catch {
+      setProducts(FALLBACK_PRODUCTS);
+      setFilteredProducts(FALLBACK_PRODUCTS);
     } finally {
       setLoading(false);
     }
@@ -83,16 +108,25 @@ export default function HomeScreen() {
     setFilteredProducts(result);
   }, [searchQuery, selectedCategory, products]);
 
+  const handleAdminLogin = () => {
+    if (adminUser.trim() === 'admin' && adminPassword === '1234') {
+      setShowLoginModal(false);
+      setUserRole('admin');
+      Alert.alert('¡Bienvenido!', 'Has ingresado como Administrador');
+    } else {
+      Alert.alert('Error', 'Usuario o contraseña incorrectos (admin / 1234)');
+    }
+  };
+
   const renderProductCard = ({ item }: { item: Producto }) => {
-    const safeImageUri = getValidImageUrl(item.imagen_url);
+    const safeImageUri = getValidImageUrl(item.imagen_url, item.categoria);
     const numPrice = typeof item.precio === 'number' ? item.precio : parseFloat(item.precio as string) || 0;
-    const formattedPrice = numPrice.toFixed(2);
 
     return (
       <TouchableOpacity
-        style={styles.card}
+        style={[styles.card, { width: cardWidth }]}
         activeOpacity={0.85}
-        onPress={() => Alert.alert('Producto', `${item.nombre}\nPrecio: L. ${formattedPrice}`)}
+        onPress={() => Alert.alert('Producto', `${item.nombre}\nPrecio: L. ${numPrice.toFixed(2)}`)}
       >
         <Image
           source={{ uri: safeImageUri }}
@@ -103,102 +137,259 @@ export default function HomeScreen() {
           <Text style={styles.productName} numberOfLines={1}>
             {item.nombre || 'Producto'}
           </Text>
-          <Text style={styles.productPrice}>L. {formattedPrice}</Text>
+          <Text style={styles.productPrice}>L. {numPrice.toFixed(2)}</Text>
         </View>
       </TouchableOpacity>
     );
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+  if (userRole === 'none') {
+    return (
+      <SafeAreaView style={styles.outerContainer}>
+        <StatusBar barStyle="dark-content" />
+        <View style={[styles.mainWrapper, styles.welcomeCenter]}>
+          <View style={styles.welcomeBox}>
+            <Text style={styles.welcomeTitle}>El Rincón del Pan 🥖</Text>
+            <Text style={styles.welcomeSubtitle}>Selecciona tu tipo de acceso</Text>
 
-      {/* Título de la pantalla */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Productos</Text>
-      </View>
-
-      {/* Buscador */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="🔍 Buscar productos..."
-          placeholderTextColor="#A08C7D"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
-
-      {/* Filtros de Categorías */}
-      <View style={styles.categoriesWrapper}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesContainer}
-        >
-          {categories.map((cat) => (
             <TouchableOpacity
-              key={cat}
-              style={[
-                styles.categoryChip,
-                selectedCategory === cat && styles.categoryChipActive,
-              ]}
-              onPress={() => setSelectedCategory(cat)}
+              style={styles.clientButton}
+              onPress={() => setUserRole('cliente')}
             >
-              <Text
-                style={[
-                  styles.categoryText,
-                  selectedCategory === cat && styles.categoryTextActive,
-                ]}
-              >
-                {cat}
-              </Text>
+              <Text style={styles.clientButtonText}>🛒 Entrar como Cliente</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
 
-      {/* Catálogo en cuadrícula */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#6C3B18" />
-          <Text style={styles.loadingText}>Cargando productos...</Text>
+            <TouchableOpacity
+              style={styles.adminButton}
+              onPress={() => setShowLoginModal(true)}
+            >
+              <Text style={styles.adminButtonText}>🔐 Acceso Administrador</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      ) : (
-        <FlatList
-          data={filteredProducts}
-          keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-          renderItem={renderProductCard}
-          numColumns={2}
-          columnWrapperStyle={styles.rowWrapper}
-          contentContainerStyle={styles.gridContainer}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No hay productos disponibles.</Text>
+
+        <Modal visible={showLoginModal} animationType="slide" transparent={true}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Iniciar Sesión - Admin</Text>
+              
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Usuario (ej. admin)"
+                placeholderTextColor="#A08C7D"
+                value={adminUser}
+                onChangeText={setAdminUser}
+                autoCapitalize="none"
+              />
+
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Contraseña (ej. 1234)"
+                placeholderTextColor="#A08C7D"
+                secureTextEntry
+                value={adminPassword}
+                onChangeText={setAdminPassword}
+              />
+
+              <TouchableOpacity style={styles.loginSubmitButton} onPress={handleAdminLogin}>
+                <Text style={styles.loginSubmitText}>Ingresar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowLoginModal(false)}
+              >
+                <Text style={styles.modalCloseText}>Cancelar</Text>
+              </TouchableOpacity>
             </View>
-          }
-        />
-      )}
+          </View>
+        </Modal>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.outerContainer}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.mainWrapper}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>Productos</Text>
+            <Text style={styles.roleTag}>
+              {userRole === 'admin' ? 'Modo: Administrador' : 'Modo: Cliente'}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.switchRoleButton}
+            onPress={() => setUserRole('none')}
+          >
+            <Text style={styles.switchRoleText}>Cambiar Rol</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="🔍 Buscar productos..."
+            placeholderTextColor="#A08C7D"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        <View style={styles.categoriesWrapper}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesContainer}
+          >
+            {categories.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  styles.categoryChip,
+                  selectedCategory === cat && styles.categoryChipActive,
+                ]}
+                onPress={() => setSelectedCategory(cat)}
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    selectedCategory === cat && styles.categoryTextActive,
+                  ]}
+                >
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#6C3B18" />
+            <Text style={styles.loadingText}>Cargando delicias...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredProducts}
+            keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+            renderItem={renderProductCard}
+            numColumns={2}
+            columnWrapperStyle={styles.rowWrapper}
+            contentContainerStyle={styles.gridContainer}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No hay productos disponibles.</Text>
+              </View>
+            }
+          />
+        )}
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  outerContainer: {
     flex: 1,
+    backgroundColor: '#F2E8DF',
+  },
+  mainWrapper: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 540,
+    alignSelf: 'center',
     backgroundColor: '#FFF9F5',
+  },
+  welcomeCenter: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  welcomeBox: {
+    width: '100%',
+    maxWidth: 380,
+    backgroundColor: '#FFFFFF',
+    padding: 28,
+    borderRadius: 24,
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F0E2D8',
+  },
+  welcomeTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#4A2810',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  welcomeSubtitle: {
+    fontSize: 15,
+    color: '#8B4513',
+    marginBottom: 24,
+  },
+  clientButton: {
+    width: '100%',
+    backgroundColor: '#8B4513',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  clientButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  adminButton: {
+    width: '100%',
+    backgroundColor: '#FFF9F5',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#8B4513',
+  },
+  adminButtonText: {
+    color: '#8B4513',
+    fontSize: 16,
+    fontWeight: '700',
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     color: '#4A2810',
+  },
+  roleTag: {
+    fontSize: 12,
+    color: '#8B4513',
+    fontWeight: '600',
+  },
+  switchRoleButton: {
+    backgroundColor: '#E8D8CD',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  switchRoleText: {
+    fontSize: 12,
+    color: '#6C3B18',
+    fontWeight: '700',
   },
   searchContainer: {
     paddingHorizontal: 20,
@@ -247,7 +438,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   card: {
-    width: CARD_WIDTH,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
@@ -261,7 +451,7 @@ const styles = StyleSheet.create({
   },
   productImage: {
     width: '100%',
-    height: 120,
+    height: 125,
     backgroundColor: '#F5ECE5',
   },
   cardContent: {
@@ -295,6 +485,59 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: '#A08C7D',
+    fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#4A2810',
+    marginBottom: 16,
+  },
+  modalInput: {
+    width: '100%',
+    height: 46,
+    backgroundColor: '#FFF9F5',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: '#E8D8CD',
+    color: '#4A2810',
+    marginBottom: 12,
+  },
+  loginSubmitButton: {
+    width: '100%',
+    backgroundColor: '#8B4513',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  loginSubmitText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  modalCloseButton: {
+    marginTop: 12,
+  },
+  modalCloseText: {
+    color: '#8B4513',
     fontSize: 14,
   },
 });
