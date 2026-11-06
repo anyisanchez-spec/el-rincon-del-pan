@@ -25,29 +25,19 @@ interface Producto {
   imagen_url?: string;
 }
 
-const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=400&auto=format&fit=crop';
-const ROSQUILLA_IMAGE = 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=400&auto=format&fit=crop';
+const DEFAULT_BREAD = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=400&auto=format&fit=crop';
+const DEFAULT_PASTRY = 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop';
+const DEFAULT_ROSQUILLA = 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=400&auto=format&fit=crop';
 
-const FALLBACK_PRODUCTS: Producto[] = [
-  { id: 1, nombre: 'Pan Casero', precio: 15, categoria: 'Pan', imagen_url: DEFAULT_IMAGE },
-  { id: 2, nombre: 'Rosquilla de Maíz', precio: 12, categoria: 'Rosquillas', imagen_url: ROSQUILLA_IMAGE },
-  { id: 3, nombre: 'Semita de Yema', precio: 15, categoria: 'Pan', imagen_url: DEFAULT_IMAGE },
-  { id: 4, nombre: 'Quesadilla Hondureña', precio: 25, categoria: 'Repostería', imagen_url: DEFAULT_IMAGE },
-  { id: 5, nombre: 'Pastel de Chocolate', precio: 45, categoria: 'Repostería', imagen_url: DEFAULT_IMAGE },
-  { id: 6, nombre: 'Empanada de Piña', precio: 18, categoria: 'Repostería', imagen_url: DEFAULT_IMAGE },
-];
-
-const getValidImageUrl = (url?: string, categoria?: string) => {
-  if (typeof url === 'string' && url.trim().length > 0 && (url.startsWith('http://') || url.startsWith('https://'))) {
-    return url.trim();
-  }
-  return categoria?.toLowerCase() === 'rosquillas' ? ROSQUILLA_IMAGE : DEFAULT_IMAGE;
+const getCategoryFallback = (cat?: string) => {
+  const c = cat?.toLowerCase() || '';
+  if (c.includes('reposter')) return DEFAULT_PASTRY;
+  if (c.includes('rosquilla')) return DEFAULT_ROSQUILLA;
+  return DEFAULT_BREAD;
 };
 
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
-
-  // Limita el ancho del contenedor en Web para que las tarjetas no se deformen
   const maxContentWidth = Math.min(width, 540);
   const cardWidth = (maxContentWidth - 48) / 2;
 
@@ -74,13 +64,9 @@ export default function HomeScreen() {
       if (data && data.length > 0) {
         setProducts(data);
         setFilteredProducts(data);
-      } else {
-        setProducts(FALLBACK_PRODUCTS);
-        setFilteredProducts(FALLBACK_PRODUCTS);
       }
-    } catch {
-      setProducts(FALLBACK_PRODUCTS);
-      setFilteredProducts(FALLBACK_PRODUCTS);
+    } catch (e) {
+      console.log('Error al obtener productos', e);
     } finally {
       setLoading(false);
     }
@@ -118,9 +104,13 @@ export default function HomeScreen() {
     }
   };
 
-  const renderProductCard = ({ item }: { item: Producto }) => {
-    const safeImageUri = getValidImageUrl(item.imagen_url, item.categoria);
+  const RenderProductCard = ({ item }: { item: Producto }) => {
     const numPrice = typeof item.precio === 'number' ? item.precio : parseFloat(item.precio as string) || 0;
+    const initialUri = item.imagen_url && item.imagen_url.trim().length > 0 
+      ? item.imagen_url.trim() 
+      : getCategoryFallback(item.categoria);
+      
+    const [imgUri, setImgUri] = useState(initialUri);
 
     return (
       <TouchableOpacity
@@ -129,9 +119,10 @@ export default function HomeScreen() {
         onPress={() => Alert.alert('Producto', `${item.nombre}\nPrecio: L. ${numPrice.toFixed(2)}`)}
       >
         <Image
-          source={{ uri: safeImageUri }}
+          source={{ uri: imgUri }}
           style={styles.productImage}
           resizeMode="cover"
+          onError={() => setImgUri(getCategoryFallback(item.categoria))}
         />
         <View style={styles.cardContent}>
           <Text style={styles.productName} numberOfLines={1}>
@@ -274,7 +265,7 @@ export default function HomeScreen() {
           <FlatList
             data={filteredProducts}
             keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-            renderItem={renderProductCard}
+            renderItem={({ item }) => <RenderProductCard item={item} />}
             numColumns={2}
             columnWrapperStyle={styles.rowWrapper}
             contentContainerStyle={styles.gridContainer}
