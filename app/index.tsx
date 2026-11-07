@@ -13,7 +13,8 @@ import {
   StatusBar,
   ScrollView,
   useWindowDimensions,
-  Modal
+  Modal,
+  Platform
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 
@@ -104,6 +105,22 @@ export default function HomeScreen() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: Platform.OS === 'web' && typeof window !== 'undefined'
+            ? window.location.origin
+            : undefined,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      Alert.alert('Error', 'Error al iniciar sesión con Google: ' + (error.message || error));
+    }
+  };
+
   const RenderProductCard = ({ item }: { item: Producto }) => {
     const numPrice = typeof item.precio === 'number' ? item.precio : parseFloat(item.precio as string) || 0;
     const initialUri = item.imagen_url && item.imagen_url.trim().length > 0 
@@ -155,6 +172,13 @@ export default function HomeScreen() {
               onPress={() => setShowLoginModal(true)}
             >
               <Text style={styles.adminButtonText}>🔐 Acceso Administrador</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleLogin}
+            >
+              <Text style={styles.googleButtonText}>🌐 Continuar con Google</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -350,6 +374,19 @@ const styles = StyleSheet.create({
   },
   adminButtonText: {
     color: '#8B4513',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  googleButton: {
+    width: '100%',
+    backgroundColor: '#4285F4',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  googleButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
   },
