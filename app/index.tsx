@@ -45,18 +45,48 @@ interface Trabajador {
   estado: 'Activo' | 'Inactivo';
 }
 
+// Catálogo de imágenes fijas de alta calidad para productos de panadería artesanal
+const BAKERY_IMAGES: Record<string, string> = {
+  'rosquilla de maíz': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop',
+  'rosquilla de maiz': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop',
+  'rosquillas de cuajada': 'https://images.unsplash.com/photo-1579372786545-d24232daf58c?q=80&w=600&auto=format&fit=crop',
+  'rosquilla': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop',
+  'rosquillas': 'https://images.unsplash.com/photo-1579372786545-d24232daf58c?q=80&w=600&auto=format&fit=crop',
+  'semita de yema': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
+  'semita': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
+  'pan casero': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
+  'torta de queso': 'https://images.unsplash.com/photo-1535141192574-5d4897c13136?q=80&w=600&auto=format&fit=crop',
+  'repostería': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop',
+};
+
 const HERO_BANNER_IMG = 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=800';
 const WELCOME_HEADER_IMG = 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=800';
 
-const DEFAULT_BREAD = 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=400';
-const DEFAULT_PASTRY = 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=400';
-const DEFAULT_ROSQUILLA = 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=400';
+// Asignador inteligente que filtra enlaces fallidos o aleatorios
+const getGuaranteedBakeryImage = (nombre?: string, categoria?: string, originalUrl?: string) => {
+  const nameLower = nombre?.toLowerCase().trim() || '';
+  const catLower = categoria?.toLowerCase().trim() || '';
 
-const getCategoryFallback = (cat?: string) => {
-  const c = cat?.toLowerCase() || '';
-  if (c.includes('reposter')) return DEFAULT_PASTRY;
-  if (c.includes('rosquilla')) return DEFAULT_ROSQUILLA;
-  return DEFAULT_BREAD;
+  // 1. Buscar coincidencias exactas por nombre del producto
+  for (const key in BAKERY_IMAGES) {
+    if (nameLower.includes(key)) {
+      return BAKERY_IMAGES[key];
+    }
+  }
+
+  // 2. Si es una URL de Supabase válida (que no sea un generador aleatorio picsum)
+  if (originalUrl && originalUrl.startsWith('http') && !originalUrl.includes('picsum.photos')) {
+    return originalUrl.replace('http://', 'https://');
+  }
+
+  // 3. Respaldo por categorías
+  if (catLower.includes('rosquilla')) {
+    return 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop';
+  }
+  if (catLower.includes('reposter')) {
+    return 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop';
+  }
+  return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop';
 };
 
 export default function HomeScreen() {
@@ -64,46 +94,43 @@ export default function HomeScreen() {
   const maxContentWidth = Math.min(width, 540);
   const cardWidth = (maxContentWidth - 48) / 2;
 
-  // Control Global de Pantallas:
-  // 'bienvenida' | 'inicio' | 'productos' | 'carrito' | 'pago' | 'confirmacion' | 'admin_menu' | 'admin_ventas' | 'admin_pedidos' | 'admin_reportes' | 'admin_config'
   const [currentScreen, setCurrentScreen] = useState<
     'bienvenida' | 'inicio' | 'productos' | 'carrito' | 'pago' | 'confirmacion' | 'admin_menu' | 'admin_ventas' | 'admin_pedidos' | 'admin_reportes' | 'admin_config'
   >('bienvenida');
 
-  // Sub-pestana de Admin
   const [adminSubTab, setAdminSubTab] = useState<'directo' | 'trabajadores'>('directo');
 
-  // Carrito de Compras
+  // Carrito de compras
   const [cartItems, setCartItems] = useState<CartItem[]>([
     {
-      product: { id: 'c1', nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan', imagen_url: DEFAULT_BREAD },
+      product: { id: 'c1', nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan' },
       quantity: 1
     },
     {
-      product: { id: 'c2', nombre: 'Semita de Yema', precio: 20.00, categoria: 'Pan', imagen_url: DEFAULT_PASTRY },
+      product: { id: 'c2', nombre: 'Semita de Yema', precio: 20.00, categoria: 'Pan' },
       quantity: 1
     }
   ]);
 
-  // Datos de Configuración de Tienda
+  // Configuración
   const [shippingFeeInput, setShippingFeeInput] = useState('15.00');
   const [openingHours, setOpeningHours] = useState('06:00 AM - 07:00 PM');
   const [cashEnabled, setCashEnabled] = useState(true);
   const [transferEnabled, setTransferEnabled] = useState(true);
 
-  // Datos de Trabajadores
-  const [trabajadores, setTrabajadores] = useState<Trabajador[]>([
+  // Trabajadores
+  const [trabajadores] = useState<Trabajador[]>([
     { id: 1, nombre: 'Carlos López', rol: 'Maestro Panadero', horario: '05:00 AM - 01:00 PM', estado: 'Activo' },
     { id: 2, nombre: 'Ana Martínez', rol: 'Cajera', horario: '07:00 AM - 03:00 PM', estado: 'Activo' },
     { id: 3, nombre: 'Pedro Ramos', rol: 'Repartidor', horario: '08:00 AM - 04:00 PM', estado: 'Activo' }
   ]);
 
-  // Formulario Pago & Entrega
+  // Formulario Pago
   const [paymentMethod, setPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
   const [deliveryAddress, setDeliveryAddress] = useState('Col. Los Pinos, Casa 123, San Pedro Sula, Cortés');
   const [lastOrderNum, setLastOrderNum] = useState('#000123');
 
-  // Modal Login Admin
+  // Modal Admin
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [adminUser, setAdminUser] = useState('admin');
   const [adminPassword, setAdminPassword] = useState('1234');
@@ -129,10 +156,11 @@ export default function HomeScreen() {
         setFilteredProducts(data);
       } else {
         const initialMock: Producto[] = [
-          { id: 1, nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan', imagen_url: DEFAULT_BREAD },
-          { id: 2, nombre: 'Semita de Yema', precio: 15.00, categoria: 'Pan', imagen_url: DEFAULT_PASTRY },
-          { id: 3, nombre: 'Rosquillas', precio: 25.00, categoria: 'Rosquillas', imagen_url: DEFAULT_ROSQUILLA },
-          { id: 4, nombre: 'Torta de queso', precio: 30.00, categoria: 'Repostería', imagen_url: DEFAULT_PASTRY }
+          { id: 1, nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan' },
+          { id: 2, nombre: 'Semita de Yema', precio: 15.00, categoria: 'Pan' },
+          { id: 3, nombre: 'Rosquilla de Maíz', precio: 12.00, categoria: 'Rosquillas' },
+          { id: 4, nombre: 'Rosquillas de Cuajada', precio: 15.00, categoria: 'Rosquillas' },
+          { id: 5, nombre: 'Torta de queso', precio: 30.00, categoria: 'Repostería' }
         ];
         setProducts(initialMock);
         setFilteredProducts(initialMock);
@@ -166,7 +194,7 @@ export default function HomeScreen() {
     setFilteredProducts(result);
   }, [searchQuery, selectedCategory, products]);
 
-  // Carrito
+  // Funciones Carrito
   const addToCart = (product: Producto) => {
     setCartItems(prev => {
       const existing = prev.find(item => item.product.id === product.id);
@@ -213,13 +241,13 @@ export default function HomeScreen() {
   const shippingFee = cartItems.length > 0 ? parsedShipping : 0.00;
   const grandTotal = subtotal + shippingFee;
 
-  // Acceso Administrador
+  // Acceso Admin
   const handleAdminLogin = () => {
     setShowLoginModal(false);
     setCurrentScreen('admin_menu');
   };
 
-  // Google OAuth Login
+  // Google OAuth
   const handleGoogleLogin = async () => {
     try {
       const redirectUrl = Linking.createURL('/');
@@ -259,20 +287,14 @@ export default function HomeScreen() {
 
   const RenderProductCard = ({ item }: { item: Producto }) => {
     const numPrice = typeof item.precio === 'number' ? item.precio : parseFloat(item.precio as string) || 0;
-    const rawUrl = item.imagen_url?.trim() || '';
-    const initialUri = (rawUrl.startsWith('https://') || rawUrl.startsWith('http://'))
-      ? rawUrl.replace('http://', 'https://')
-      : getCategoryFallback(item.categoria);
-      
-    const [imgUri, setImgUri] = useState(initialUri);
+    const finalImgUri = getGuaranteedBakeryImage(item.nombre, item.categoria, item.imagen_url);
 
     return (
       <View style={[styles.card, { width: cardWidth }]}>
         <Image
-          source={{ uri: imgUri }}
+          source={{ uri: finalImgUri }}
           style={styles.productImage}
           resizeMode="cover"
-          onError={() => setImgUri(getCategoryFallback(item.categoria))}
         />
         <View style={styles.cardContent}>
           <Text style={styles.productCategory}>{item.categoria || 'Pan'}</Text>
@@ -294,9 +316,7 @@ export default function HomeScreen() {
     );
   };
 
-  // =============================================================
-  // PANTALLA 1: BIENVENIDA
-  // =============================================================
+  // 1. BIENVENIDA
   if (currentScreen === 'bienvenida') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -387,9 +407,7 @@ export default function HomeScreen() {
     );
   }
 
-  // =============================================================
-  // PANTALLA 5: MÉTODO DE PAGO Y ENTREGA
-  // =============================================================
+  // 5. PAGO Y ENTREGA
   if (currentScreen === 'pago') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -464,9 +482,7 @@ export default function HomeScreen() {
     );
   }
 
-  // =============================================================
-  // PANTALLA 6: CONFIRMACIÓN DE PEDIDO
-  // =============================================================
+  // 6. CONFIRMACIÓN
   if (currentScreen === 'confirmacion') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -500,9 +516,7 @@ export default function HomeScreen() {
     );
   }
 
-  // =============================================================
-  // PANTALLA 9: PANEL ADMIN - MENÚ PRINCIPAL Y TRABAJADORES
-  // =============================================================
+  // 9. PANEL ADMIN MENÚ
   if (currentScreen === 'admin_menu') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -518,7 +532,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Sub-pestañas: Directo / Trabajadores */}
           <View style={styles.adminSubTabsBar}>
             <TouchableOpacity 
               style={adminSubTab === 'directo' ? styles.adminSubTabActive : styles.adminSubTabInactive}
@@ -536,7 +549,6 @@ export default function HomeScreen() {
           </View>
 
           {adminSubTab === 'directo' ? (
-            /* VISTA DIRECTO: MENÚ PRINCIPAL ADMIN */
             <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}>
               <TouchableOpacity 
                 style={styles.adminMenuCard}
@@ -575,7 +587,6 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </ScrollView>
           ) : (
-            /* VISTA TRABAJADORES: GESTIÓN DE PERSONAL */
             <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <Text style={styles.sectionTitle}>Personal de la Panadería</Text>
@@ -608,9 +619,7 @@ export default function HomeScreen() {
     );
   }
 
-  // =============================================================
-  // PANTALLA: REPORTES ADMIN
-  // =============================================================
+  // REPORTES ADMIN
   if (currentScreen === 'admin_reportes') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -637,14 +646,14 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.reportItemCard}>
-              <Text style={styles.reportItemName}>3. Torta de queso</Text>
-              <Text style={styles.reportItemStat}>40 unidades vendidas</Text>
+              <Text style={styles.reportItemName}>3. Rosquillas de Cuajada</Text>
+              <Text style={styles.reportItemStat}>80 unidades vendidas</Text>
             </View>
 
             <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Resumen de Insumos</Text>
             <View style={styles.reportSummaryBox}>
               <Text style={styles.reportSummaryText}>• Harina de Trigo: 85% de stock</Text>
-              <Text style={styles.reportSummaryText}>• Levadura Fresca: 60% de stock</Text>
+              <Text style={styles.reportSummaryText}>• Cuajada Fresca: 70% de stock</Text>
               <Text style={styles.reportSummaryText}>• Manteca y Azúcar: Reabastecido</Text>
             </View>
 
@@ -660,9 +669,7 @@ export default function HomeScreen() {
     );
   }
 
-  // =============================================================
-  // PANTALLA: CONFIGURACIÓN ADMIN
-  // =============================================================
+  // CONFIGURACIÓN ADMIN
   if (currentScreen === 'admin_config') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -728,9 +735,7 @@ export default function HomeScreen() {
     );
   }
 
-  // =============================================================
-  // PANTALLA: GESTIÓN DE PEDIDOS / PRODUCTOS ADMIN
-  // =============================================================
+  // PEDIDOS ADMIN
   if (currentScreen === 'admin_pedidos') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -744,27 +749,28 @@ export default function HomeScreen() {
           </View>
 
           <ScrollView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }}>
-            {products.map(p => (
-              <View key={p.id} style={styles.adminItemRow}>
-                <Image source={{ uri: p.imagen_url || DEFAULT_BREAD }} style={styles.adminItemImage} />
-                <View style={{ flex: 1, marginLeft: 10 }}>
-                  <Text style={styles.adminItemName}>{p.nombre}</Text>
-                  <Text style={styles.adminItemPrice}>L. {typeof p.precio === 'number' ? p.precio.toFixed(2) : p.precio}</Text>
+            {products.map(p => {
+              const imgUri = getGuaranteedBakeryImage(p.nombre, p.categoria, p.imagen_url);
+              return (
+                <View key={p.id} style={styles.adminItemRow}>
+                  <Image source={{ uri: imgUri }} style={styles.adminItemImage} />
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text style={styles.adminItemName}>{p.nombre}</Text>
+                    <Text style={styles.adminItemPrice}>L. {typeof p.precio === 'number' ? p.precio.toFixed(2) : p.precio}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.editBtn}>
+                    <Text style={styles.editBtnText}>Editar</Text>
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={styles.editBtn}>
-                  <Text style={styles.editBtnText}>Editar</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
+              );
+            })}
           </ScrollView>
         </View>
       </SafeAreaView>
     );
   }
 
-  // =============================================================
-  // PANTALLA 10: PANEL ADMIN - VENTAS
-  // =============================================================
+  // 10. VENTAS ADMIN
   if (currentScreen === 'admin_ventas') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -826,9 +832,7 @@ export default function HomeScreen() {
     );
   }
 
-  // =============================================================
-  // PANTALLAS 2, 3 Y 4: INICIO / PRODUCTOS / CARRITO DE CLIENTE
-  // =============================================================
+  // 2, 3 Y 4: CLIENTE
   return (
     <SafeAreaView style={styles.outerContainer}>
       <StatusBar barStyle="dark-content" />
@@ -876,7 +880,7 @@ export default function HomeScreen() {
                   const itemPrice = typeof item.product.precio === 'number'
                     ? item.product.precio
                     : parseFloat(item.product.precio as string) || 0;
-                  const itemImg = item.product.imagen_url || getCategoryFallback(item.product.categoria);
+                  const itemImg = getGuaranteedBakeryImage(item.product.nombre, item.product.categoria, item.product.imagen_url);
 
                   return (
                     <View key={item.product.id} style={styles.cartItemRow}>
@@ -1582,7 +1586,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // ADMIN HEADER
   adminMainHeader: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -1657,7 +1660,6 @@ const styles = StyleSheet.create({
     color: '#5B321B',
   },
 
-  // TRABAJADORES
   staffCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -1696,7 +1698,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  // REPORTES
   reportItemCard: {
     backgroundColor: '#FFFFFF',
     padding: 14,
@@ -1731,7 +1732,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // CONFIGURACIÓN
   configCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -1771,7 +1771,6 @@ const styles = StyleSheet.create({
     color: '#5B321B',
   },
 
-  // VENTAS
   ventasHeader: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -1880,7 +1879,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // ITEMS ADMIN
   adminItemRow: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -1927,7 +1925,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E8D2C1',
     flexDirection: 'row',
-    justify.content: 'space-around',
+    justifyContent: 'space-around',
     alignItems: 'center',
     maxWidth: 540,
     alignSelf: 'center',
