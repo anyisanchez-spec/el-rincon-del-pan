@@ -15,7 +15,8 @@ import {
   useWindowDimensions,
   Modal,
   Platform,
-  ImageBackground
+  ImageBackground,
+  Switch
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
@@ -36,7 +37,14 @@ interface CartItem {
   quantity: number;
 }
 
-// Imágenes seguras HTTPS
+interface Trabajador {
+  id: number;
+  nombre: string;
+  rol: string;
+  horario: string;
+  estado: 'Activo' | 'Inactivo';
+}
+
 const HERO_BANNER_IMG = 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=800';
 const WELCOME_HEADER_IMG = 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=800';
 
@@ -57,12 +65,15 @@ export default function HomeScreen() {
   const cardWidth = (maxContentWidth - 48) / 2;
 
   // Control Global de Pantallas:
-  // 'bienvenida' (1) | 'inicio' (2) | 'productos' (3) | 'carrito' (4) | 'pago' (5) | 'confirmacion' (6) | 'admin_menu' (9) | 'admin_ventas' (10) | 'admin_pedidos'
+  // 'bienvenida' | 'inicio' | 'productos' | 'carrito' | 'pago' | 'confirmacion' | 'admin_menu' | 'admin_ventas' | 'admin_pedidos' | 'admin_reportes' | 'admin_config'
   const [currentScreen, setCurrentScreen] = useState<
-    'bienvenida' | 'inicio' | 'productos' | 'carrito' | 'pago' | 'confirmacion' | 'admin_menu' | 'admin_ventas' | 'admin_pedidos'
+    'bienvenida' | 'inicio' | 'productos' | 'carrito' | 'pago' | 'confirmacion' | 'admin_menu' | 'admin_ventas' | 'admin_pedidos' | 'admin_reportes' | 'admin_config'
   >('bienvenida');
 
-  // Carrito pre-cargado con los datos del diseño (Pan Casero L.15 + Semita L.20 = Subtotal L.35 + Envío L.15 = Total L.50)
+  // Sub-pestana de Admin
+  const [adminSubTab, setAdminSubTab] = useState<'directo' | 'trabajadores'>('directo');
+
+  // Carrito de Compras
   const [cartItems, setCartItems] = useState<CartItem[]>([
     {
       product: { id: 'c1', nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan', imagen_url: DEFAULT_BREAD },
@@ -74,12 +85,25 @@ export default function HomeScreen() {
     }
   ]);
 
-  // Formulario Pago & Entrega (Pantalla 5)
+  // Datos de Configuración de Tienda
+  const [shippingFeeInput, setShippingFeeInput] = useState('15.00');
+  const [openingHours, setOpeningHours] = useState('06:00 AM - 07:00 PM');
+  const [cashEnabled, setCashEnabled] = useState(true);
+  const [transferEnabled, setTransferEnabled] = useState(true);
+
+  // Datos de Trabajadores
+  const [trabajadores, setTrabajadores] = useState<Trabajador[]>([
+    { id: 1, nombre: 'Carlos López', rol: 'Maestro Panadero', horario: '05:00 AM - 01:00 PM', estado: 'Activo' },
+    { id: 2, nombre: 'Ana Martínez', rol: 'Cajera', horario: '07:00 AM - 03:00 PM', estado: 'Activo' },
+    { id: 3, nombre: 'Pedro Ramos', rol: 'Repartidor', horario: '08:00 AM - 04:00 PM', estado: 'Activo' }
+  ]);
+
+  // Formulario Pago & Entrega
   const [paymentMethod, setPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
   const [deliveryAddress, setDeliveryAddress] = useState('Col. Los Pinos, Casa 123, San Pedro Sula, Cortés');
   const [lastOrderNum, setLastOrderNum] = useState('#000123');
 
-  // Modal Login Administrador
+  // Modal Login Admin
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [adminUser, setAdminUser] = useState('admin');
   const [adminPassword, setAdminPassword] = useState('1234');
@@ -106,7 +130,7 @@ export default function HomeScreen() {
       } else {
         const initialMock: Producto[] = [
           { id: 1, nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan', imagen_url: DEFAULT_BREAD },
-          { id: 2, nombre: 'Semita de Yema', precio: 20.00, categoria: 'Pan', imagen_url: DEFAULT_PASTRY },
+          { id: 2, nombre: 'Semita de Yema', precio: 15.00, categoria: 'Pan', imagen_url: DEFAULT_PASTRY },
           { id: 3, nombre: 'Rosquillas', precio: 25.00, categoria: 'Rosquillas', imagen_url: DEFAULT_ROSQUILLA },
           { id: 4, nombre: 'Torta de queso', precio: 30.00, categoria: 'Repostería', imagen_url: DEFAULT_PASTRY }
         ];
@@ -142,7 +166,7 @@ export default function HomeScreen() {
     setFilteredProducts(result);
   }, [searchQuery, selectedCategory, products]);
 
-  // Operaciones del Carrito
+  // Carrito
   const addToCart = (product: Producto) => {
     setCartItems(prev => {
       const existing = prev.find(item => item.product.id === product.id);
@@ -185,10 +209,11 @@ export default function HomeScreen() {
     return sum + price * item.quantity;
   }, 0);
 
-  const shippingFee = cartItems.length > 0 ? 15.00 : 0.00;
+  const parsedShipping = parseFloat(shippingFeeInput) || 15.00;
+  const shippingFee = cartItems.length > 0 ? parsedShipping : 0.00;
   const grandTotal = subtotal + shippingFee;
 
-  // Acceso Administrador (Directo a Pantalla 9)
+  // Acceso Administrador
   const handleAdminLogin = () => {
     setShowLoginModal(false);
     setCurrentScreen('admin_menu');
@@ -476,14 +501,13 @@ export default function HomeScreen() {
   }
 
   // =============================================================
-  // PANTALLA 9: PANEL ADMIN - MENÚ PRINCIPAL (FIEL AL PDF)
+  // PANTALLA 9: PANEL ADMIN - MENÚ PRINCIPAL Y TRABAJADORES
   // =============================================================
   if (currentScreen === 'admin_menu') {
     return (
       <SafeAreaView style={styles.outerContainer}>
         <StatusBar barStyle="light-content" />
         <View style={styles.mainWrapper}>
-          {/* Header Superior Admin */}
           <View style={styles.adminMainHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Text style={{ fontSize: 24, marginRight: 8 }}>🏠</Text>
@@ -494,55 +518,142 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Selector de sub-pestañas: Directo / Trabajadores */}
+          {/* Sub-pestañas: Directo / Trabajadores */}
           <View style={styles.adminSubTabsBar}>
-            <TouchableOpacity style={styles.adminSubTabActive}>
-              <Text style={styles.adminSubTabTextActive}>Directo</Text>
+            <TouchableOpacity 
+              style={adminSubTab === 'directo' ? styles.adminSubTabActive : styles.adminSubTabInactive}
+              onPress={() => setAdminSubTab('directo')}
+            >
+              <Text style={adminSubTab === 'directo' ? styles.adminSubTabTextActive : styles.adminSubTabTextInactive}>Directo</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.adminSubTabInactive}>
-              <Text style={styles.adminSubTabTextInactive}>Trabajadores</Text>
+
+            <TouchableOpacity 
+              style={adminSubTab === 'trabajadores' ? styles.adminSubTabActive : styles.adminSubTabInactive}
+              onPress={() => setAdminSubTab('trabajadores')}
+            >
+              <Text style={adminSubTab === 'trabajadores' ? styles.adminSubTabTextActive : styles.adminSubTabTextInactive}>Trabajadores</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Menú de Tarjetas Grandes estilo Inciso 9 */}
-          <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}>
+          {adminSubTab === 'directo' ? (
+            /* VISTA DIRECTO: MENÚ PRINCIPAL ADMIN */
+            <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}>
+              <TouchableOpacity 
+                style={styles.adminMenuCard}
+                onPress={() => setCurrentScreen('admin_pedidos')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.adminMenuCardIcon}>📦</Text>
+                <Text style={styles.adminMenuCardText}>Pedidos</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.adminMenuCard}
+                onPress={() => setCurrentScreen('admin_ventas')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.adminMenuCardIcon}>📈</Text>
+                <Text style={styles.adminMenuCardText}>Ventas</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.adminMenuCard}
+                onPress={() => setCurrentScreen('admin_reportes')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.adminMenuCardIcon}>📊</Text>
+                <Text style={styles.adminMenuCardText}>Reportes</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.adminMenuCard}
+                onPress={() => setCurrentScreen('admin_config')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.adminMenuCardIcon}>⚙️</Text>
+                <Text style={styles.adminMenuCardText}>Configuración</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          ) : (
+            /* VISTA TRABAJADORES: GESTIÓN DE PERSONAL */
+            <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Text style={styles.sectionTitle}>Personal de la Panadería</Text>
+                <TouchableOpacity 
+                  style={{ backgroundColor: '#5B321B', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12 }}
+                  onPress={() => Alert.alert('Nuevo Trabajador', 'Formulario para registrar personal')}
+                >
+                  <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 12 }}>+ Agregar</Text>
+                </TouchableOpacity>
+              </View>
+
+              {trabajadores.map((t) => (
+                <View key={t.id} style={styles.staffCard}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.staffName}>{t.nombre}</Text>
+                    <Text style={styles.staffRole}>{t.rol}</Text>
+                    <Text style={styles.staffHours}>⏰ {t.horario}</Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <View style={styles.statusBadge}>
+                      <Text style={styles.statusBadgeText}>{t.estado}</Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // =============================================================
+  // PANTALLA: REPORTES ADMIN
+  // =============================================================
+  if (currentScreen === 'admin_reportes') {
+    return (
+      <SafeAreaView style={styles.outerContainer}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.mainWrapper}>
+          <View style={styles.simpleHeader}>
+            <TouchableOpacity onPress={() => setCurrentScreen('admin_menu')}>
+              <Text style={styles.backButtonText}>‹ Volver al Menú Admin</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitleCenter}>Reportes</Text>
+          </View>
+
+          <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingBottom: 40 }}>
+            <Text style={styles.sectionTitle}>Productos Más Vendidos</Text>
             
-            <TouchableOpacity 
-              style={styles.adminMenuCard}
-              onPress={() => setCurrentScreen('admin_pedidos')}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.adminMenuCardIcon}>📦</Text>
-              <Text style={styles.adminMenuCardText}>Pedidos</Text>
-            </TouchableOpacity>
+            <View style={styles.reportItemCard}>
+              <Text style={styles.reportItemName}>1. Semita de Yema</Text>
+              <Text style={styles.reportItemStat}>120 unidades vendidas</Text>
+            </View>
+
+            <View style={styles.reportItemCard}>
+              <Text style={styles.reportItemName}>2. Pan Casero</Text>
+              <Text style={styles.reportItemStat}>95 unidades vendidas</Text>
+            </View>
+
+            <View style={styles.reportItemCard}>
+              <Text style={styles.reportItemName}>3. Torta de queso</Text>
+              <Text style={styles.reportItemStat}>40 unidades vendidas</Text>
+            </View>
+
+            <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Resumen de Insumos</Text>
+            <View style={styles.reportSummaryBox}>
+              <Text style={styles.reportSummaryText}>• Harina de Trigo: 85% de stock</Text>
+              <Text style={styles.reportSummaryText}>• Levadura Fresca: 60% de stock</Text>
+              <Text style={styles.reportSummaryText}>• Manteca y Azúcar: Reabastecido</Text>
+            </View>
 
             <TouchableOpacity 
-              style={styles.adminMenuCard}
-              onPress={() => setCurrentScreen('admin_ventas')}
-              activeOpacity={0.85}
+              style={styles.confirmOrderButton}
+              onPress={() => Alert.alert('Descarga exitosa', 'El reporte general en PDF ha sido exportado.')}
             >
-              <Text style={styles.adminMenuCardIcon}>📈</Text>
-              <Text style={styles.adminMenuCardText}>Ventas</Text>
+              <Text style={styles.confirmOrderButtonText}>📥 Descargar Reporte Completo</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.adminMenuCard}
-              onPress={() => Alert.alert('Reportes', 'Generando reporte global de la panadería...')}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.adminMenuCardIcon}>📊</Text>
-              <Text style={styles.adminMenuCardText}>Reportes</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.adminMenuCard}
-              onPress={() => Alert.alert('Configuración', 'Ajustes de catálogo y tienda activos')}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.adminMenuCardIcon}>⚙️</Text>
-              <Text style={styles.adminMenuCardText}>Configuración</Text>
-            </TouchableOpacity>
-
           </ScrollView>
         </View>
       </SafeAreaView>
@@ -550,7 +661,75 @@ export default function HomeScreen() {
   }
 
   // =============================================================
-  // PANTALLA 9 (SUBSECCIÓN): GESTIÓN DE PEDIDOS / PRODUCTOS ADMIN
+  // PANTALLA: CONFIGURACIÓN ADMIN
+  // =============================================================
+  if (currentScreen === 'admin_config') {
+    return (
+      <SafeAreaView style={styles.outerContainer}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.mainWrapper}>
+          <View style={styles.simpleHeader}>
+            <TouchableOpacity onPress={() => setCurrentScreen('admin_menu')}>
+              <Text style={styles.backButtonText}>‹ Volver al Menú Admin</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitleCenter}>Configuración</Text>
+          </View>
+
+          <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingBottom: 40 }}>
+            <Text style={styles.sectionTitle}>Parámetros del Negocio</Text>
+
+            <View style={styles.configCard}>
+              <Text style={styles.configLabel}>Costo de Envío por Defecto (L.)</Text>
+              <TextInput
+                style={styles.configInput}
+                value={shippingFeeInput}
+                onChangeText={setShippingFeeInput}
+                keyboardType="numeric"
+              />
+
+              <Text style={styles.configLabel}>Horario de Atención</Text>
+              <TextInput
+                style={styles.configInput}
+                value={openingHours}
+                onChangeText={setOpeningHours}
+              />
+            </View>
+
+            <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Métodos de Pago Activos</Text>
+            <View style={styles.configCard}>
+              <View style={styles.toggleRow}>
+                <Text style={styles.toggleLabel}>💵 Efectivo al recibir</Text>
+                <Switch
+                  value={cashEnabled}
+                  onValueChange={setCashEnabled}
+                  trackColor={{ false: '#E8D2C1', true: '#5B321B' }}
+                />
+              </View>
+
+              <View style={[styles.toggleRow, { borderBottomWidth: 0 }]}>
+                <Text style={styles.toggleLabel}>🏦 Transferencia bancaria</Text>
+                <Switch
+                  value={transferEnabled}
+                  onValueChange={setTransferEnabled}
+                  trackColor={{ false: '#E8D2C1', true: '#5B321B' }}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.confirmOrderButton}
+              onPress={() => Alert.alert('Configuración Guardada', 'Se han actualizado los parámetros de la tienda.')}
+            >
+              <Text style={styles.confirmOrderButtonText}>Guardar Cambios</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // =============================================================
+  // PANTALLA: GESTIÓN DE PEDIDOS / PRODUCTOS ADMIN
   // =============================================================
   if (currentScreen === 'admin_pedidos') {
     return (
@@ -584,15 +763,13 @@ export default function HomeScreen() {
   }
 
   // =============================================================
-  // PANTALLA 10: PANEL ADMIN - VENTAS (FIEL AL PDF)
+  // PANTALLA 10: PANEL ADMIN - VENTAS
   // =============================================================
   if (currentScreen === 'admin_ventas') {
     return (
       <SafeAreaView style={styles.outerContainer}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.mainWrapper}>
-          
-          {/* Header Superior Ventas */}
           <View style={styles.ventasHeader}>
             <TouchableOpacity onPress={() => setCurrentScreen('admin_menu')}>
               <Text style={styles.backButtonText}>‹ Volver</Text>
@@ -604,8 +781,6 @@ export default function HomeScreen() {
           </View>
 
           <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingBottom: 40 }}>
-            
-            {/* Tarjeta Métricas Principales */}
             <View style={styles.ventasMetricsCard}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.ventasMetricsLabel}>Total de ventas</Text>
@@ -617,13 +792,11 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {/* Sub-métrica de Promedio */}
             <View style={styles.promedioBox}>
               <Text style={styles.promedioLabel}>Promedio / día</Text>
               <Text style={styles.promedioValue}>L. 155.00</Text>
             </View>
 
-            {/* Gráfico Estadísticas Semanales */}
             <View style={styles.chartContainer}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: '#5B321B', marginBottom: 14 }}>
                 Rendimiento semanal
@@ -647,7 +820,6 @@ export default function HomeScreen() {
                 <Text style={styles.chartLabel}>Dom</Text>
               </View>
             </View>
-
           </ScrollView>
         </View>
       </SafeAreaView>
@@ -685,7 +857,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* PANTALLA 4: CARRITO FIEL AL PDF */}
         {currentScreen === 'carrito' ? (
           <ScrollView style={styles.cartScreenContainer} contentContainerStyle={{ paddingBottom: 100 }}>
             <Text style={styles.sectionTitle}>Carrito</Text>
@@ -749,7 +920,6 @@ export default function HomeScreen() {
             )}
           </ScrollView>
         ) : (
-          /* PANTALLAS 2 Y 3: INICIO Y PRODUCTOS */
           loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#5B321B" />
@@ -827,7 +997,6 @@ export default function HomeScreen() {
           )
         )}
 
-        {/* NAVEGACIÓN INFERIOR DE PESTAÑAS */}
         <View style={styles.bottomTabBar}>
           <TouchableOpacity style={styles.tabItem} onPress={() => setCurrentScreen('inicio')}>
             <Text style={[styles.tabIcon, currentScreen === 'inicio' && styles.tabIconActive]}>🏠</Text>
@@ -1284,6 +1453,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
+  headerTitleCenter: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#5B321B',
+    marginRight: 60,
+  },
   payOptionBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1405,7 +1582,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // ESTILOS DE LA PANTALLA 9 (PANEL ADMIN MENÚ PRINCIPAL)
+  // ADMIN HEADER
   adminMainHeader: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -1480,7 +1657,121 @@ const styles = StyleSheet.create({
     color: '#5B321B',
   },
 
-  // ESTILOS DE LA PANTALLA 10 (PANEL ADMIN VENTAS)
+  // TRABAJADORES
+  staffCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E8D2C1',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  staffName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#5B321B',
+  },
+  staffRole: {
+    fontSize: 13,
+    color: '#D9764A',
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  staffHours: {
+    fontSize: 12,
+    color: '#7A5C47',
+    marginTop: 4,
+  },
+  statusBadge: {
+    backgroundColor: '#E8F5E9',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+  },
+  statusBadgeText: {
+    color: '#2E7D32',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+
+  // REPORTES
+  reportItemCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E8D2C1',
+    marginBottom: 10,
+  },
+  reportItemName: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#5B321B',
+  },
+  reportItemStat: {
+    fontSize: 13,
+    color: '#D9764A',
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  reportSummaryBox: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E8D2C1',
+    marginBottom: 16,
+  },
+  reportSummaryText: {
+    fontSize: 13,
+    color: '#5B321B',
+    marginBottom: 6,
+    fontWeight: '600',
+  },
+
+  // CONFIGURACIÓN
+  configCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E8D2C1',
+    marginBottom: 12,
+  },
+  configLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#5B321B',
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  configInput: {
+    backgroundColor: '#FFF7EB',
+    borderRadius: 12,
+    padding: 10,
+    fontSize: 14,
+    color: '#5B321B',
+    borderWidth: 1,
+    borderColor: '#E8D2C1',
+    marginBottom: 12,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#FFF7EB',
+  },
+  toggleLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#5B321B',
+  },
+
+  // VENTAS
   ventasHeader: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -1589,7 +1880,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // ADMIN ITEM ROW
+  // ITEMS ADMIN
   adminItemRow: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -1636,7 +1927,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E8D2C1',
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justify.content: 'space-around',
     alignItems: 'center',
     maxWidth: 540,
     alignSelf: 'center',
