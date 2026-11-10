@@ -16,7 +16,12 @@ import {
   Modal,
   Platform
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
 import { supabase } from '../lib/supabase';
+
+// Permite cerrar la ventana del navegador al completar la autenticación en web/móvil
+WebBrowser.maybeCompleteAuthSession();
 
 interface Producto {
   id: string | number;
@@ -26,9 +31,10 @@ interface Producto {
   imagen_url?: string;
 }
 
-const DEFAULT_BREAD = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=400&auto=format&fit=crop';
-const DEFAULT_PASTRY = 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=400&auto=format&fit=crop';
-const DEFAULT_ROSQUILLA = 'https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&w=400&auto=format&fit=crop';
+// Enlaces de imágenes estables en HTTPS
+const DEFAULT_BREAD = 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=400';
+const DEFAULT_PASTRY = 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=400';
+const DEFAULT_ROSQUILLA = 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=400';
 
 const getCategoryFallback = (cat?: string) => {
   const c = cat?.toLowerCase() || '';
@@ -105,17 +111,33 @@ export default function HomeScreen() {
     }
   };
 
+  // Función multiplataforma (detecta automáticamente si es Web o Móvil)
   const handleGoogleLogin = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const redirectUrl = Linking.createURL('/');
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: Platform.OS === 'web' && typeof window !== 'undefined'
-            ? window.location.origin
-            : undefined,
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: Platform.OS !== 'web',
         },
       });
+
       if (error) throw error;
+
+      if (Platform.OS !== 'web' && data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
+        if (result.type === 'success' && result.url) {
+          const { queryParams } = Linking.parse(result.url);
+          if (queryParams?.access_token && queryParams?.refresh_token) {
+            await supabase.auth.setSession({
+              access_token: queryParams.access_token as string,
+              refresh_token: queryParams.refresh_token as string,
+            });
+          }
+        }
+      }
     } catch (error: any) {
       Alert.alert('Error', 'Error al iniciar sesión con Google: ' + (error.message || error));
     }
@@ -123,8 +145,11 @@ export default function HomeScreen() {
 
   const RenderProductCard = ({ item }: { item: Producto }) => {
     const numPrice = typeof item.precio === 'number' ? item.precio : parseFloat(item.precio as string) || 0;
-    const initialUri = item.imagen_url && item.imagen_url.trim().length > 0 
-      ? item.imagen_url.trim() 
+    
+    // Auto-corrección de URLs HTTP a HTTPS y fallback si la URL de Supabase está vacía
+    const rawUrl = item.imagen_url?.trim() || '';
+    const initialUri = (rawUrl.startsWith('https://') || rawUrl.startsWith('http://'))
+      ? rawUrl.replace('http://', 'https://')
       : getCategoryFallback(item.categoria);
       
     const [imgUri, setImgUri] = useState(initialUri);
@@ -158,7 +183,7 @@ export default function HomeScreen() {
         <View style={[styles.mainWrapper, styles.welcomeCenter]}>
           <View style={styles.welcomeBox}>
             <Text style={styles.welcomeTitle}>El Rincón del Pan 🥖</Text>
-            <Text style={styles.welcomeSubtitle}>Selecciona tu tipo de acceso</Text>
+            <Text style={styles.welcomeSubtitle}>Pan fresco, sabor casero</Text>
 
             <TouchableOpacity
               style={styles.clientButton}
@@ -229,7 +254,7 @@ export default function HomeScreen() {
       <View style={styles.mainWrapper}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.headerTitle}>Productos</Text>
+            <Text style={styles.headerTitle}>Catálogo de Productos</Text>
             <Text style={styles.roleTag}>
               {userRole === 'admin' ? 'Modo: Administrador' : 'Modo: Cliente'}
             </Text>
@@ -282,7 +307,7 @@ export default function HomeScreen() {
 
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#6C3B18" />
+            <ActivityIndicator size="large" color="#5B321B" />
             <Text style={styles.loadingText}>Cargando delicias...</Text>
           </View>
         ) : (
@@ -309,14 +334,14 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   outerContainer: {
     flex: 1,
-    backgroundColor: '#F2E8DF',
+    backgroundColor: '#FFF7EB', // Crema oficial
   },
   mainWrapper: {
     flex: 1,
     width: '100%',
     maxWidth: 540,
     alignSelf: 'center',
-    backgroundColor: '#FFF9F5',
+    backgroundColor: '#FFF7EB',
   },
   welcomeCenter: {
     justifyContent: 'center',
@@ -331,30 +356,31 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: '#5B321B',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     borderWidth: 1,
-    borderColor: '#F0E2D8',
+    borderColor: '#E8D2C1',
   },
   welcomeTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#4A2810',
-    marginBottom: 8,
+    color: '#5B321B', // Café principal
+    marginBottom: 6,
     textAlign: 'center',
   },
   welcomeSubtitle: {
     fontSize: 15,
-    color: '#8B4513',
+    color: '#D9764A', // Terracota
+    fontWeight: '600',
     marginBottom: 24,
   },
   clientButton: {
     width: '100%',
-    backgroundColor: '#8B4513',
+    backgroundColor: '#5B321B', // Café principal
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: 20,
     alignItems: 'center',
     marginBottom: 12,
   },
@@ -365,15 +391,15 @@ const styles = StyleSheet.create({
   },
   adminButton: {
     width: '100%',
-    backgroundColor: '#FFF9F5',
+    backgroundColor: '#FFF7EB',
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: 20,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#8B4513',
+    borderColor: '#5B321B',
   },
   adminButtonText: {
-    color: '#8B4513',
+    color: '#5B321B',
     fontSize: 16,
     fontWeight: '700',
   },
@@ -381,7 +407,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#4285F4',
     paddingVertical: 14,
-    borderRadius: 14,
+    borderRadius: 20,
     alignItems: 'center',
     marginTop: 12,
   },
@@ -401,22 +427,22 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#4A2810',
+    color: '#5B321B',
   },
   roleTag: {
     fontSize: 12,
-    color: '#8B4513',
+    color: '#D9764A',
     fontWeight: '600',
   },
   switchRoleButton: {
-    backgroundColor: '#E8D8CD',
+    backgroundColor: '#E8D2C1',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 12,
   },
   switchRoleText: {
     fontSize: 12,
-    color: '#6C3B18',
+    color: '#5B321B',
     fontWeight: '700',
   },
   searchContainer: {
@@ -430,8 +456,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: '#E8D8CD',
-    color: '#4A2810',
+    borderColor: '#E8D2C1',
+    color: '#5B321B',
   },
   categoriesWrapper: {
     marginBottom: 16,
@@ -444,15 +470,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#E8D8CD',
+    backgroundColor: '#E8D2C1',
   },
   categoryChipActive: {
-    backgroundColor: '#8B4513',
+    backgroundColor: '#5B321B',
   },
   categoryText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6C3B18',
+    color: '#5B321B',
   },
   categoryTextActive: {
     color: '#FFFFFF',
@@ -470,16 +496,16 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#F0E2D8',
-    shadowColor: '#000',
+    borderColor: '#E8D2C1',
+    shadowColor: '#5B321B',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   productImage: {
     width: '100%',
-    height: 125,
+    height: 135, // Tamaño fijo asegurado para renderizado web y móvil
     backgroundColor: '#F5ECE5',
   },
   cardContent: {
@@ -488,14 +514,14 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#4A2810',
+    fontWeight: '700',
+    color: '#5B321B',
     marginBottom: 4,
   },
   productPrice: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#8B4513',
+    color: '#D9764A', // Terracota para destacar precio
   },
   loadingContainer: {
     flex: 1,
@@ -504,7 +530,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 10,
-    color: '#8B4513',
+    color: '#5B321B',
     fontSize: 14,
   },
   emptyContainer: {
@@ -529,28 +555,30 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E8D2C1',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#4A2810',
+    color: '#5B321B',
     marginBottom: 16,
   },
   modalInput: {
     width: '100%',
     height: 46,
-    backgroundColor: '#FFF9F5',
+    backgroundColor: '#FFF7EB',
     borderRadius: 12,
     paddingHorizontal: 14,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: '#E8D8CD',
-    color: '#4A2810',
+    borderColor: '#E8D2C1',
+    color: '#5B321B',
     marginBottom: 12,
   },
   loginSubmitButton: {
     width: '100%',
-    backgroundColor: '#8B4513',
+    backgroundColor: '#5B321B',
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
@@ -565,7 +593,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   modalCloseText: {
-    color: '#8B4513',
+    color: '#D9764A',
     fontSize: 14,
   },
 });

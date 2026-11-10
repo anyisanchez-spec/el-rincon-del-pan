@@ -19,7 +19,7 @@
     "expo": "~58.0.17",
     "expo-auth-session": "~58.0.16",
     "expo-constants": "~58.0.13",
-    "expo-linking": "~58.0.14",
+    "expo-linking": "~58.0.16",
     "expo-router": "~58.0.25",
     "expo-web-browser": "~58.0.7",
     "express": "^5.2.1",
