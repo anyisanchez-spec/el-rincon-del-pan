@@ -45,80 +45,86 @@ interface Trabajador {
   estado: 'Activo' | 'Inactivo';
 }
 
-// Mapeo exhaustivo de imágenes fijas en alta resolución por producto
+// Búsqueda sin acentos para emparejar nombres de productos
+const normalizeText = (text?: string) => {
+  return (text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+};
+
+// Galería garantizada de fotos reales y directas de Pexels en alta resolución
 const GUARANTEED_IMAGES: Record<string, string> = {
   // --- ROSQUILLAS ---
-  'rosquilla de maíz': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop',
-  'rosquilla de maiz': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop',
-  'rosquillas de cuajada': 'https://images.unsplash.com/photo-1579372786545-d24232daf58c?q=80&w=600&auto=format&fit=crop',
-  'tostadas de maíz': 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec?q=80&w=600&auto=format&fit=crop',
-  'tostadas de maiz': 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec?q=80&w=600&auto=format&fit=crop',
+  'rosquilla de maiz': 'https://images.pexels.com/photos/4109998/pexels-photo-4109998.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'rosquilla': 'https://images.pexels.com/photos/4109998/pexels-photo-4109998.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'rosquillas de cuajada': 'https://images.pexels.com/photos/3779937/pexels-photo-3779937.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'rosquillas': 'https://images.pexels.com/photos/3779937/pexels-photo-3779937.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'tostadas de maiz': 'https://images.pexels.com/photos/5682474/pexels-photo-5682474.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'tostadas': 'https://images.pexels.com/photos/5682474/pexels-photo-5682474.jpeg?auto=compress&cs=tinysrgb&w=600',
 
   // --- PANES ---
-  'pan casero': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
-  'semita de yema': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
-  'panes / croissants': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=600&auto=format&fit=crop',
-  'croissants': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=600&auto=format&fit=crop',
-  'pan de molde artesanal': 'https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?q=80&w=600&auto=format&fit=crop',
-  'pan integral': 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?q=80&w=600&auto=format&fit=crop',
-  'pan de ajo': 'https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?q=80&w=600&auto=format&fit=crop',
+  'pan casero': 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'semita de yema': 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'semita': 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'panes / croissants': 'https://images.pexels.com/photos/3892469/pexels-photo-3892469.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'croissants': 'https://images.pexels.com/photos/3892469/pexels-photo-3892469.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'pan de molde artesanal': 'https://images.pexels.com/photos/1586947/pexels-photo-1586947.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'pan integral': 'https://images.pexels.com/photos/1756062/pexels-photo-1756062.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'pan de ajo': 'https://images.pexels.com/photos/6287522/pexels-photo-6287522.jpeg?auto=compress&cs=tinysrgb&w=600',
 
   // --- REPOSTERÍA & TORTAS ---
-  'quesadilla hondureña': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
-  'pastel de chocolate': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop',
-  'empanada de piña': 'https://images.unsplash.com/photo-1621996346565-e3d5d6281288?q=80&w=600&auto=format&fit=crop',
-  'empanada de pina': 'https://images.unsplash.com/photo-1621996346565-e3d5d6281288?q=80&w=600&auto=format&fit=crop',
-  'dona glaseada': 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=600&auto=format&fit=crop',
-  'torta de mínimo (banano)': 'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?q=80&w=600&auto=format&fit=crop',
-  'torta de minimo': 'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?q=80&w=600&auto=format&fit=crop',
-  'torta de queso': 'https://images.unsplash.com/photo-1535141192574-5d4897c13136?q=80&w=600&auto=format&fit=crop',
-  'torta de zanahoria': 'https://images.unsplash.com/photo-1621303837174-89787a7d4729?q=80&w=600&auto=format&fit=crop',
-  'torta de elote': 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?q=80&w=600&auto=format&fit=crop',
-  'torta de mantequilla': 'https://images.unsplash.com/photo-1519869325930-281384150729?q=80&w=600&auto=format&fit=crop',
-  'torta de levadura': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
+  'quesadilla hondurena': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'quesadilla': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'pastel de chocolate': 'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'empanada de pina': 'https://images.pexels.com/photos/2693447/pexels-photo-2693447.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'empanada': 'https://images.pexels.com/photos/2693447/pexels-photo-2693447.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'dona glaseada': 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'dona': 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de minimo (banano)': 'https://images.pexels.com/photos/830894/pexels-photo-830894.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de minimo': 'https://images.pexels.com/photos/830894/pexels-photo-830894.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de queso': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de zanahoria': 'https://images.pexels.com/photos/14107/pexels-photo-14107.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de elote': 'https://images.pexels.com/photos/709841/pexels-photo-709841.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de mantequilla': 'https://images.pexels.com/photos/1055272/pexels-photo-1055272.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de levadura': 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600',
 
   // --- BEBIDAS ---
-  'café capuchino caliente': 'https://images.unsplash.com/photo-1534778101976-62847782c213?q=80&w=600&auto=format&fit=crop',
-  'cafe capuchino caliente': 'https://images.unsplash.com/photo-1534778101976-62847782c213?q=80&w=600&auto=format&fit=crop',
-  'chocolate caliente': 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?q=80&w=600&auto=format&fit=crop',
-  'café helado (iced latte)': 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?q=80&w=600&auto=format&fit=crop',
-  'cafe helado': 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?q=80&w=600&auto=format&fit=crop',
-  'jugo natural de naranja': 'https://images.unsplash.com/photo-1613478223719-2ab802602423?q=80&w=600&auto=format&fit=crop',
+  'cafe capuchino caliente': 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'chocolate caliente': 'https://images.pexels.com/photos/373639/pexels-photo-373639.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'cafe helado (iced latte)': 'https://images.pexels.com/photos/2615323/pexels-photo-2615323.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'jugo natural de naranja': 'https://images.pexels.com/photos/1337825/pexels-photo-1337825.jpeg?auto=compress&cs=tinysrgb&w=600',
 
   // --- DESPENSA / ARTESANALES ---
-  'café en grano (1 lb)': 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=600&auto=format&fit=crop',
-  'cafe en grano': 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=600&auto=format&fit=crop',
-  'café molido gourmet (1 lb)': 'https://images.unsplash.com/photo-1587734195503-904fca47e0e9?q=80&w=600&auto=format&fit=crop',
-  'cafe molido': 'https://images.unsplash.com/photo-1587734195503-904fca47e0e9?q=80&w=600&auto=format&fit=crop',
-  'miel de abeja pura': 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?q=80&w=600&auto=format&fit=crop',
-  'cúrcuma orgánica molida': 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?q=80&w=600&auto=format&fit=crop',
-  'curcuma organica molida': 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?q=80&w=600&auto=format&fit=crop',
-  'cacao & chocolate artesanal': 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?q=80&w=600&auto=format&fit=crop',
-  'cacao': 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?q=80&w=600&auto=format&fit=crop',
+  'cafe en grano (1 lb)': 'https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'cafe molido gourmet (1 lb)': 'https://images.pexels.com/photos/373639/pexels-photo-373639.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'miel de abeja pura': 'https://images.pexels.com/photos/33260/honey-sweet-syrup-organic.jpg?auto=compress&cs=tinysrgb&w=600',
+  'curcuma organica molida': 'https://images.pexels.com/photos/1340116/pexels-photo-1340116.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'cacao & chocolate artesanal': 'https://images.pexels.com/photos/65882/chocolate-dark-coffee-confiserie-65882.jpeg?auto=compress&cs=tinysrgb&w=600',
 };
 
 const HERO_BANNER_IMG = 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=800';
 const WELCOME_HEADER_IMG = 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=800';
 
 const getGuaranteedBakeryImage = (nombre?: string, categoria?: string) => {
-  const nameLower = (nombre || '').toLowerCase().trim();
-  const catLower = (categoria || '').toLowerCase().trim();
+  const normName = normalizeText(nombre);
+  const normCat = normalizeText(categoria);
 
   for (const key of Object.keys(GUARANTEED_IMAGES)) {
-    if (nameLower.includes(key)) {
+    if (normName.includes(key)) {
       return GUARANTEED_IMAGES[key];
     }
   }
 
-  if (catLower.includes('rosquilla')) return 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop';
-  if (catLower.includes('bebida')) return 'https://images.unsplash.com/photo-1534778101976-62847782c213?q=80&w=600&auto=format&fit=crop';
-  if (catLower.includes('despensa')) return 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=600&auto=format&fit=crop';
-  if (catLower.includes('reposter')) return 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop';
+  if (normCat.includes('rosquilla')) return GUARANTEED_IMAGES['rosquilla de maiz'];
+  if (normCat.includes('bebida')) return GUARANTEED_IMAGES['cafe capuchino caliente'];
+  if (normCat.includes('despensa')) return GUARANTEED_IMAGES['cafe en grano (1 lb)'];
+  if (normCat.includes('reposter')) return GUARANTEED_IMAGES['quesadilla hondurena'];
 
-  return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop';
+  return GUARANTEED_IMAGES['pan casero'];
 };
 
-// Catálogo completo por defecto
 const FULL_PRODUCTS_CATALOG: Producto[] = [
   // Panes
   { id: 1, nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan' },
@@ -206,34 +212,27 @@ export default function HomeScreen() {
   const [adminPassword, setAdminPassword] = useState('1234');
 
   // Productos
-  const [products, setProducts] = useState<Producto[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Producto[]>([]);
+  const [products, setProducts] = useState<Producto[]>(FULL_PRODUCTS_CATALOG);
+  const [filteredProducts, setFilteredProducts] = useState<Producto[]>(FULL_PRODUCTS_CATALOG);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const categories = ['Todos', 'Pan', 'Repostería', 'Rosquillas', 'Bebidas', 'Despensa'];
 
   const fetchProducts = async () => {
     try {
-      setLoading(true);
       const { data, error } = await supabase.from('productos').select('*');
-
       if (error) console.log('Aviso Supabase:', error.message);
 
       if (data && data.length > 5) {
         setProducts(data);
-        setFilteredProducts(data);
       } else {
         setProducts(FULL_PRODUCTS_CATALOG);
-        setFilteredProducts(FULL_PRODUCTS_CATALOG);
       }
     } catch (e) {
       console.log('Error al obtener productos', e);
       setProducts(FULL_PRODUCTS_CATALOG);
-      setFilteredProducts(FULL_PRODUCTS_CATALOG);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -246,13 +245,13 @@ export default function HomeScreen() {
 
     if (selectedCategory !== 'Todos') {
       result = result.filter(
-        (item) => item.categoria?.toLowerCase() === selectedCategory.toLowerCase()
+        (item) => normalizeText(item.categoria) === normalizeText(selectedCategory)
       );
     }
 
     if (searchQuery.trim() !== '') {
       result = result.filter((item) =>
-        item.nombre?.toLowerCase().includes(searchQuery.toLowerCase())
+        normalizeText(item.nombre).includes(normalizeText(searchQuery))
       );
     }
 
@@ -924,7 +923,7 @@ export default function HomeScreen() {
         </View>
 
         {currentScreen === 'carrito' ? (
-          <ScrollView style={styles.cartScreenContainer} contentContainerStyle={{ paddingBottom: 100 }}>
+          <ScrollView style={styles.cartScreenContainer} contentContainerStyle={{ paddingBottom: 80 }}>
             <Text style={styles.sectionTitle}>Carrito</Text>
 
             {cartItems.length === 0 ? (
@@ -986,12 +985,7 @@ export default function HomeScreen() {
             )}
           </ScrollView>
         ) : (
-          loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#5B321B" />
-              <Text style={styles.loadingText}>Cargando delicias...</Text>
-            </View>
-          ) : (
+          <View style={{ flex: 1 }}>
             <FlatList
               data={filteredProducts}
               keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
@@ -1000,7 +994,6 @@ export default function HomeScreen() {
               columnWrapperStyle={styles.rowWrapper}
               contentContainerStyle={styles.gridContainer}
               showsVerticalScrollIndicator={true}
-              style={{ flex: 1 }}
               ListHeaderComponent={
                 <>
                   {currentScreen === 'inicio' && (
@@ -1061,7 +1054,7 @@ export default function HomeScreen() {
                 </View>
               }
             />
-          )
+          </View>
         )}
 
         <View style={styles.bottomTabBar}>
@@ -1326,7 +1319,7 @@ const styles = StyleSheet.create({
   },
   gridContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 110,
+    paddingBottom: 20,
   },
   rowWrapper: {
     justifyContent: 'space-between',
@@ -1973,19 +1966,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   bottomTabBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 65,
+    height: 60,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E8D2C1',
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    maxWidth: 540,
-    alignSelf: 'center',
+    width: '100%',
   },
   tabItem: {
     alignItems: 'center',
