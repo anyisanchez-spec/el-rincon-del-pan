@@ -36,7 +36,7 @@ interface CartItem {
   quantity: number;
 }
 
-// Enlaces de imágenes estables en HTTPS
+// Imágenes seguras HTTPS
 const HERO_BANNER_IMG = 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=800';
 const WELCOME_HEADER_IMG = 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=800';
 
@@ -56,12 +56,13 @@ export default function HomeScreen() {
   const maxContentWidth = Math.min(width, 540);
   const cardWidth = (maxContentWidth - 48) / 2;
 
-  // Control de Flujo de Pantallas
-  // 1: Bienvenida, 2/3/4: Main App (Tab Navegación), 5: Pago, 6: Confirmación, 9: Admin Productos, 10: Admin Ventas
-  const [screenView, setScreenView] = useState<'bienvenida' | 'main' | 'pago' | 'confirmacion' | 'admin_productos' | 'admin_ventas'>('bienvenida');
-  const [activeTab, setActiveTab] = useState<'inicio' | 'productos' | 'carrito' | 'perfil'>('inicio');
+  // Control Global de Pantallas:
+  // 'bienvenida' (1) | 'inicio' (2) | 'productos' (3) | 'carrito' (4) | 'pago' (5) | 'confirmacion' (6) | 'admin_menu' (9) | 'admin_ventas' (10) | 'admin_pedidos'
+  const [currentScreen, setCurrentScreen] = useState<
+    'bienvenida' | 'inicio' | 'productos' | 'carrito' | 'pago' | 'confirmacion' | 'admin_menu' | 'admin_ventas' | 'admin_pedidos'
+  >('bienvenida');
 
-  // Carrito de compras
+  // Carrito pre-cargado con los datos del diseño (Pan Casero L.15 + Semita L.20 = Subtotal L.35 + Envío L.15 = Total L.50)
   const [cartItems, setCartItems] = useState<CartItem[]>([
     {
       product: { id: 'c1', nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan', imagen_url: DEFAULT_BREAD },
@@ -73,15 +74,15 @@ export default function HomeScreen() {
     }
   ]);
 
-  // Formulario de Pago y Entrega
+  // Formulario Pago & Entrega (Pantalla 5)
   const [paymentMethod, setPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
-  const [deliveryAddress, setDeliveryAddress] = useState('Col. Los Pinos, Casa 123, San Pedro Sula');
+  const [deliveryAddress, setDeliveryAddress] = useState('Col. Los Pinos, Casa 123, San Pedro Sula, Cortés');
   const [lastOrderNum, setLastOrderNum] = useState('#000123');
 
-  // Modal Login Admin
+  // Modal Login Administrador
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [adminUser, setAdminUser] = useState('');
-  const [adminPassword, setAdminPassword] = useState('');
+  const [adminUser, setAdminUser] = useState('admin');
+  const [adminPassword, setAdminPassword] = useState('1234');
 
   // Productos desde Supabase
   const [products, setProducts] = useState<Producto[]>([]);
@@ -103,10 +104,9 @@ export default function HomeScreen() {
         setProducts(data);
         setFilteredProducts(data);
       } else {
-        // Productos por defecto alineados a la propuesta visual si la BD está vacía
         const initialMock: Producto[] = [
           { id: 1, nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan', imagen_url: DEFAULT_BREAD },
-          { id: 2, nombre: 'Semita de Yema', precio: 15.00, categoria: 'Pan', imagen_url: DEFAULT_PASTRY },
+          { id: 2, nombre: 'Semita de Yema', precio: 20.00, categoria: 'Pan', imagen_url: DEFAULT_PASTRY },
           { id: 3, nombre: 'Rosquillas', precio: 25.00, categoria: 'Rosquillas', imagen_url: DEFAULT_ROSQUILLA },
           { id: 4, nombre: 'Torta de queso', precio: 30.00, categoria: 'Repostería', imagen_url: DEFAULT_PASTRY }
         ];
@@ -142,7 +142,7 @@ export default function HomeScreen() {
     setFilteredProducts(result);
   }, [searchQuery, selectedCategory, products]);
 
-  // Funciones de Gestión del Carrito
+  // Operaciones del Carrito
   const addToCart = (product: Producto) => {
     setCartItems(prev => {
       const existing = prev.find(item => item.product.id === product.id);
@@ -176,10 +176,6 @@ export default function HomeScreen() {
     );
   };
 
-  const removeFromCart = (productId: string | number) => {
-    setCartItems(prev => prev.filter(item => item.product.id !== productId));
-  };
-
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const subtotal = cartItems.reduce((sum, item) => {
@@ -192,15 +188,10 @@ export default function HomeScreen() {
   const shippingFee = cartItems.length > 0 ? 15.00 : 0.00;
   const grandTotal = subtotal + shippingFee;
 
-  // Login de Administrador
+  // Acceso Administrador (Directo a Pantalla 9)
   const handleAdminLogin = () => {
-    if (adminUser.trim() === 'admin' && adminPassword === '1234') {
-      setShowLoginModal(false);
-      setScreenView('admin_productos');
-      Alert.alert('¡Bienvenido!', 'Has ingresado al Panel de Administración');
-    } else {
-      Alert.alert('Error', 'Usuario o contraseña incorrectos (admin / 1234)');
-    }
+    setShowLoginModal(false);
+    setCurrentScreen('admin_menu');
   };
 
   // Google OAuth Login
@@ -229,20 +220,18 @@ export default function HomeScreen() {
           }
         }
       }
-      setScreenView('main');
+      setCurrentScreen('inicio');
     } catch (error: any) {
       Alert.alert('Error', 'Error al iniciar sesión con Google: ' + (error.message || error));
     }
   };
 
-  // Confirmar Pedido
   const handleConfirmOrder = () => {
     const randomOrder = `#000${Math.floor(100 + Math.random() * 900)}`;
     setLastOrderNum(randomOrder);
-    setScreenView('confirmacion');
+    setCurrentScreen('confirmacion');
   };
 
-  // Componente Tarjeta de Producto
   const RenderProductCard = ({ item }: { item: Producto }) => {
     const numPrice = typeof item.precio === 'number' ? item.precio : parseFloat(item.precio as string) || 0;
     const rawUrl = item.imagen_url?.trim() || '';
@@ -280,10 +269,10 @@ export default function HomeScreen() {
     );
   };
 
-  // -------------------------------------------------------------
-  // INCISO 1: PANTALLA DE BIENVENIDA
-  // -------------------------------------------------------------
-  if (screenView === 'bienvenida') {
+  // =============================================================
+  // PANTALLA 1: BIENVENIDA
+  // =============================================================
+  if (currentScreen === 'bienvenida') {
     return (
       <SafeAreaView style={styles.outerContainer}>
         <StatusBar barStyle="dark-content" />
@@ -298,7 +287,7 @@ export default function HomeScreen() {
             </ImageBackground>
 
             <View style={styles.welcomeContentContainer}>
-              <Text style={styles.welcomeTitle}>El Rincón del Pan 🥖</Text>
+              <Text style={styles.welcomeTitle}>El Rincón del Pan 🌾</Text>
               <Text style={styles.welcomeSlogan}>Pan fresco, sabor casero ♡</Text>
               <Text style={styles.welcomeDescription}>
                 Tradición, calidad y sabor en la palma de tu mano
@@ -306,7 +295,7 @@ export default function HomeScreen() {
 
               <TouchableOpacity
                 style={styles.primaryActionButton}
-                onPress={() => { setScreenView('main'); setActiveTab('inicio'); }}
+                onPress={() => setCurrentScreen('inicio')}
                 activeOpacity={0.85}
               >
                 <Text style={styles.primaryActionButtonText}>Comenzar</Text>
@@ -331,11 +320,12 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Modal Login Admin */}
+        {/* Modal Admin */}
         <Modal visible={showLoginModal} animationType="slide" transparent={true}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Iniciar Sesión - Admin</Text>
+              <Text style={styles.modalHintText}>Presiona Ingresar para acceder al Panel Admin</Text>
               
               <TextInput
                 style={styles.modalInput}
@@ -372,28 +362,26 @@ export default function HomeScreen() {
     );
   }
 
-  // -------------------------------------------------------------
-  // INCISO 5: PANTALLA DE PAGO Y ENTREGA
-  // -------------------------------------------------------------
-  if (screenView === 'pago') {
+  // =============================================================
+  // PANTALLA 5: MÉTODO DE PAGO Y ENTREGA
+  // =============================================================
+  if (currentScreen === 'pago') {
     return (
       <SafeAreaView style={styles.outerContainer}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.mainWrapper}>
           <View style={styles.simpleHeader}>
-            <TouchableOpacity onPress={() => { setScreenView('main'); setActiveTab('carrito'); }}>
-              <Text style={styles.backButtonText}>‹ Volver al Carrito</Text>
+            <TouchableOpacity onPress={() => setCurrentScreen('carrito')}>
+              <Text style={styles.backButtonText}>‹ Método de pago</Text>
             </TouchableOpacity>
-            <Text style={styles.headerTitleCenter}>Método de pago</Text>
           </View>
 
           <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingBottom: 40 }}>
-            {/* Opciones de pago */}
             <TouchableOpacity 
               style={[styles.payOptionBox, paymentMethod === 'efectivo' && styles.payOptionBoxActive]}
               onPress={() => setPaymentMethod('efectivo')}
             >
-              <Text style={styles.payOptionIcon}>💵</Text>
+              <Text style={styles.payOptionIcon}>🏠</Text>
               <View style={{ flex: 1 }}>
                 <Text style={styles.payOptionTitle}>Efectivo al recibir</Text>
                 <Text style={styles.payOptionSub}>Paga cuando recibas tu pedido.</Text>
@@ -411,18 +399,22 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
 
-            {/* Dirección de entrega */}
             <View style={styles.deliveryCard}>
-              <Text style={styles.deliveryTitle}>Dirección de entrega</Text>
-              <TextInput
-                style={styles.deliveryInput}
-                value={deliveryAddress}
-                onChangeText={setDeliveryAddress}
-                multiline
-              />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={styles.deliveryTitle}>Dirección de entrega</Text>
+                <Text style={{ color: '#D9764A', fontSize: 12, fontWeight: '700' }}>Editar</Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                <Text style={{ fontSize: 16, marginRight: 8 }}>📍</Text>
+                <TextInput
+                  style={styles.deliveryInput}
+                  value={deliveryAddress}
+                  onChangeText={setDeliveryAddress}
+                  multiline
+                />
+              </View>
             </View>
 
-            {/* Resumen final */}
             <View style={styles.summaryCard}>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Subtotal</Text>
@@ -447,10 +439,10 @@ export default function HomeScreen() {
     );
   }
 
-  // -------------------------------------------------------------
-  // INCISO 6: PANTALLA DE CONFIRMACIÓN
-  // -------------------------------------------------------------
-  if (screenView === 'confirmacion') {
+  // =============================================================
+  // PANTALLA 6: CONFIRMACIÓN DE PEDIDO
+  // =============================================================
+  if (currentScreen === 'confirmacion') {
     return (
       <SafeAreaView style={styles.outerContainer}>
         <StatusBar barStyle="dark-content" />
@@ -472,8 +464,7 @@ export default function HomeScreen() {
               style={styles.primaryActionButton}
               onPress={() => {
                 setCartItems([]);
-                setScreenView('main');
-                setActiveTab('inicio');
+                setCurrentScreen('inicio');
               }}
             >
               <Text style={styles.primaryActionButtonText}>Ver detalles</Text>
@@ -484,32 +475,96 @@ export default function HomeScreen() {
     );
   }
 
-  // -------------------------------------------------------------
-  // INCISO 9: PANEL ADMIN - PRODUCTOS
-  // -------------------------------------------------------------
-  if (screenView === 'admin_productos') {
+  // =============================================================
+  // PANTALLA 9: PANEL ADMIN - MENÚ PRINCIPAL (FIEL AL PDF)
+  // =============================================================
+  if (currentScreen === 'admin_menu') {
     return (
       <SafeAreaView style={styles.outerContainer}>
-        <StatusBar barStyle="dark-content" />
+        <StatusBar barStyle="light-content" />
         <View style={styles.mainWrapper}>
-          <View style={styles.adminHeader}>
-            <Text style={styles.adminHeaderTitle}>🏠 Admin</Text>
-            <TouchableOpacity onPress={() => setScreenView('bienvenida')}>
-              <Text style={styles.logoutAdminText}>Salir</Text>
+          {/* Header Superior Admin */}
+          <View style={styles.adminMainHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 24, marginRight: 8 }}>🏠</Text>
+              <Text style={styles.adminMainTitle}>Admin</Text>
+            </View>
+            <TouchableOpacity onPress={() => setCurrentScreen('bienvenida')}>
+              <Text style={styles.logoutAdminLink}>Cerrar Sesión</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.adminTabToggle}>
-            <TouchableOpacity style={[styles.adminTabBtn, styles.adminTabBtnActive]}>
-              <Text style={styles.adminTabBtnTextActive}>Productos</Text>
+          {/* Selector de sub-pestañas: Directo / Trabajadores */}
+          <View style={styles.adminSubTabsBar}>
+            <TouchableOpacity style={styles.adminSubTabActive}>
+              <Text style={styles.adminSubTabTextActive}>Directo</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.adminTabBtn} onPress={() => setScreenView('admin_ventas')}>
-              <Text style={styles.adminTabBtnText}>Ventas</Text>
+            <TouchableOpacity style={styles.adminSubTabInactive}>
+              <Text style={styles.adminSubTabTextInactive}>Trabajadores</Text>
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={{ flex: 1, paddingHorizontal: 20 }}>
-            <Text style={styles.sectionTitle}>Gestión de Productos</Text>
+          {/* Menú de Tarjetas Grandes estilo Inciso 9 */}
+          <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}>
+            
+            <TouchableOpacity 
+              style={styles.adminMenuCard}
+              onPress={() => setCurrentScreen('admin_pedidos')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.adminMenuCardIcon}>📦</Text>
+              <Text style={styles.adminMenuCardText}>Pedidos</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.adminMenuCard}
+              onPress={() => setCurrentScreen('admin_ventas')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.adminMenuCardIcon}>📈</Text>
+              <Text style={styles.adminMenuCardText}>Ventas</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.adminMenuCard}
+              onPress={() => Alert.alert('Reportes', 'Generando reporte global de la panadería...')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.adminMenuCardIcon}>📊</Text>
+              <Text style={styles.adminMenuCardText}>Reportes</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.adminMenuCard}
+              onPress={() => Alert.alert('Configuración', 'Ajustes de catálogo y tienda activos')}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.adminMenuCardIcon}>⚙️</Text>
+              <Text style={styles.adminMenuCardText}>Configuración</Text>
+            </TouchableOpacity>
+
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // =============================================================
+  // PANTALLA 9 (SUBSECCIÓN): GESTIÓN DE PEDIDOS / PRODUCTOS ADMIN
+  // =============================================================
+  if (currentScreen === 'admin_pedidos') {
+    return (
+      <SafeAreaView style={styles.outerContainer}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.mainWrapper}>
+          <View style={styles.adminMainHeader}>
+            <TouchableOpacity onPress={() => setCurrentScreen('admin_menu')}>
+              <Text style={styles.logoutAdminLink}>‹ Volver al Menú Admin</Text>
+            </TouchableOpacity>
+            <Text style={styles.adminMainTitle}>Gestión de Productos</Text>
+          </View>
+
+          <ScrollView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }}>
             {products.map(p => (
               <View key={p.id} style={styles.adminItemRow}>
                 <Image source={{ uri: p.imagen_url || DEFAULT_BREAD }} style={styles.adminItemImage} />
@@ -528,49 +583,59 @@ export default function HomeScreen() {
     );
   }
 
-  // -------------------------------------------------------------
-  // INCISO 10: PANEL ADMIN - VENTAS
-  // -------------------------------------------------------------
-  if (screenView === 'admin_ventas') {
+  // =============================================================
+  // PANTALLA 10: PANEL ADMIN - VENTAS (FIEL AL PDF)
+  // =============================================================
+  if (currentScreen === 'admin_ventas') {
     return (
       <SafeAreaView style={styles.outerContainer}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.mainWrapper}>
-          <View style={styles.adminHeader}>
-            <Text style={styles.adminHeaderTitle}>📊 Ventas</Text>
-            <TouchableOpacity onPress={() => setScreenView('bienvenida')}>
-              <Text style={styles.logoutAdminText}>Salir</Text>
+          
+          {/* Header Superior Ventas */}
+          <View style={styles.ventasHeader}>
+            <TouchableOpacity onPress={() => setCurrentScreen('admin_menu')}>
+              <Text style={styles.backButtonText}>‹ Volver</Text>
             </TouchableOpacity>
+            <Text style={styles.ventasTitle}>Ventas</Text>
+            <View style={styles.dropdownFilter}>
+              <Text style={styles.dropdownFilterText}>Este mes ▾</Text>
+            </View>
           </View>
 
-          <View style={styles.adminTabToggle}>
-            <TouchableOpacity style={styles.adminTabBtn} onPress={() => setScreenView('admin_productos')}>
-              <Text style={styles.adminTabBtnText}>Productos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.adminTabBtn, styles.adminTabBtnActive]}>
-              <Text style={styles.adminTabBtnTextActive}>Ventas</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={{ flex: 1, paddingHorizontal: 20 }}>
-            <View style={styles.statsCard}>
-              <Text style={styles.statsLabel}>Total de ventas</Text>
-              <Text style={styles.statsValue}>L. 4,650.00</Text>
-              <Text style={styles.statsSub}>Pedidos: 48</Text>
+          <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingBottom: 40 }}>
+            
+            {/* Tarjeta Métricas Principales */}
+            <View style={styles.ventasMetricsCard}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.ventasMetricsLabel}>Total de ventas</Text>
+                <Text style={styles.ventasMetricsTotal}>L. 4,650.00</Text>
+              </View>
+              <View style={{ borderLeftWidth: 1, borderLeftColor: '#E8D2C1', paddingLeft: 16 }}>
+                <Text style={styles.ventasMetricsLabel}>Pedidos</Text>
+                <Text style={styles.ventasMetricsCount}>48</Text>
+              </View>
             </View>
 
-            <Text style={styles.sectionTitle}>Estadísticas semanales</Text>
-            
-            {/* Gráfico de barras conceptual */}
+            {/* Sub-métrica de Promedio */}
+            <View style={styles.promedioBox}>
+              <Text style={styles.promedioLabel}>Promedio / día</Text>
+              <Text style={styles.promedioValue}>L. 155.00</Text>
+            </View>
+
+            {/* Gráfico Estadísticas Semanales */}
             <View style={styles.chartContainer}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#5B321B', marginBottom: 14 }}>
+                Rendimiento semanal
+              </Text>
               <View style={styles.chartBarsRow}>
-                <View style={[styles.bar, { height: 40 }]} />
-                <View style={[styles.bar, { height: 70 }]} />
-                <View style={[styles.bar, { height: 50 }]} />
-                <View style={[styles.bar, { height: 90 }]} />
-                <View style={[styles.bar, { height: 110 }]} />
-                <View style={[styles.bar, { height: 140 }]} />
+                <View style={[styles.bar, { height: 45 }]} />
+                <View style={[styles.bar, { height: 75 }]} />
+                <View style={[styles.bar, { height: 55 }]} />
                 <View style={[styles.bar, { height: 95 }]} />
+                <View style={[styles.bar, { height: 115 }]} />
+                <View style={[styles.bar, { height: 145 }]} />
+                <View style={[styles.bar, { height: 100 }]} />
               </View>
               <View style={styles.chartLabelsRow}>
                 <Text style={styles.chartLabel}>Lun</Text>
@@ -582,28 +647,28 @@ export default function HomeScreen() {
                 <Text style={styles.chartLabel}>Dom</Text>
               </View>
             </View>
+
           </ScrollView>
         </View>
       </SafeAreaView>
     );
   }
 
-  // -------------------------------------------------------------
-  // INCISOS 2, 3 Y 4: PANTALLA PRINCIPAL CON PESTAÑAS (INICIO / PRODUCTOS / CARRITO)
-  // -------------------------------------------------------------
+  // =============================================================
+  // PANTALLAS 2, 3 Y 4: INICIO / PRODUCTOS / CARRITO DE CLIENTE
+  // =============================================================
   return (
     <SafeAreaView style={styles.outerContainer}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.mainWrapper}>
 
-        {/* Header Superior */}
         <View style={styles.header}>
           <View>
             <Text style={styles.brandTitle}>El Rincón del Pan</Text>
             <Text style={styles.roleTag}>🥖 Sabor Artesanal</Text>
           </View>
           <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.cartIconBadge} onPress={() => setActiveTab('carrito')}>
+            <TouchableOpacity style={styles.cartIconBadge} onPress={() => setCurrentScreen('carrito')}>
               <Text style={styles.cartIconText}>🛒</Text>
               {cartCount > 0 && (
                 <View style={styles.badgeCount}>
@@ -613,24 +678,24 @@ export default function HomeScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.switchRoleButton}
-              onPress={() => setScreenView('bienvenida')}
+              onPress={() => setCurrentScreen('bienvenida')}
             >
               <Text style={styles.switchRoleText}>Salir</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* INCISO 4: VISTA DE CARRITO */}
-        {activeTab === 'carrito' ? (
+        {/* PANTALLA 4: CARRITO FIEL AL PDF */}
+        {currentScreen === 'carrito' ? (
           <ScrollView style={styles.cartScreenContainer} contentContainerStyle={{ paddingBottom: 100 }}>
-            <Text style={styles.sectionTitle}>🛒 Carrito</Text>
+            <Text style={styles.sectionTitle}>Carrito</Text>
 
             {cartItems.length === 0 ? (
               <View style={styles.emptyCartContainer}>
                 <Text style={styles.emptyCartIcon}>🍞</Text>
                 <Text style={styles.emptyCartTitle}>Tu carrito está vacío</Text>
                 <Text style={styles.emptyCartSubtitle}>Agrega delicias desde el catálogo para hacer tu pedido.</Text>
-                <TouchableOpacity style={styles.primaryActionButton} onPress={() => setActiveTab('productos')}>
+                <TouchableOpacity style={styles.primaryActionButton} onPress={() => setCurrentScreen('productos')}>
                   <Text style={styles.primaryActionButtonText}>Ver Catálogo</Text>
                 </TouchableOpacity>
               </View>
@@ -662,7 +727,6 @@ export default function HomeScreen() {
                   );
                 })}
 
-                {/* Resumen de Total del Carrito */}
                 <View style={styles.summaryCard}>
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Subtotal</Text>
@@ -677,27 +741,15 @@ export default function HomeScreen() {
                     <Text style={styles.totalValue}>L. {grandTotal.toFixed(2)}</Text>
                   </View>
 
-                  <TouchableOpacity style={styles.confirmOrderButton} onPress={() => setScreenView('pago')}>
+                  <TouchableOpacity style={styles.confirmOrderButton} onPress={() => setCurrentScreen('pago')}>
                     <Text style={styles.confirmOrderButtonText}>Continuar</Text>
                   </TouchableOpacity>
                 </View>
               </>
             )}
           </ScrollView>
-        ) : activeTab === 'perfil' ? (
-          /* VISTA DE PERFIL */
-          <View style={styles.profileContainer}>
-            <Text style={styles.sectionTitle}>👤 Perfil de Usuario</Text>
-            <View style={styles.profileCard}>
-              <Text style={styles.profileName}>Cliente Activo</Text>
-              <Text style={styles.profileSub}>El Rincón del Pan</Text>
-              <TouchableOpacity style={styles.logoutButton} onPress={() => setScreenView('bienvenida')}>
-                <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         ) : (
-          /* INCISOS 2 Y 3: VISTA DE INICIO / PRODUCTOS CON HERO BANNER Y GRILLA */
+          /* PANTALLAS 2 Y 3: INICIO Y PRODUCTOS */
           loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#5B321B" />
@@ -714,8 +766,7 @@ export default function HomeScreen() {
               showsVerticalScrollIndicator={false}
               ListHeaderComponent={
                 <>
-                  {/* INCISO 2: Banner Hero ("Pan recién horneado todos los días") */}
-                  {activeTab === 'inicio' && (
+                  {currentScreen === 'inicio' && (
                     <ImageBackground
                       source={{ uri: HERO_BANNER_IMG }}
                       style={styles.heroBanner}
@@ -728,7 +779,6 @@ export default function HomeScreen() {
                     </ImageBackground>
                   )}
 
-                  {/* INCISO 3: Buscador de productos */}
                   <View style={styles.searchContainer}>
                     <TextInput
                       style={styles.searchInput}
@@ -739,7 +789,6 @@ export default function HomeScreen() {
                     />
                   </View>
 
-                  {/* Filtro de Categorías */}
                   <View style={styles.categoriesWrapper}>
                     <ScrollView
                       horizontal
@@ -778,26 +827,26 @@ export default function HomeScreen() {
           )
         )}
 
-        {/* BARRA INFERIOR DE NAVEGACIÓN */}
+        {/* NAVEGACIÓN INFERIOR DE PESTAÑAS */}
         <View style={styles.bottomTabBar}>
-          <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('inicio')}>
-            <Text style={[styles.tabIcon, activeTab === 'inicio' && styles.tabIconActive]}>🏠</Text>
-            <Text style={[styles.tabLabel, activeTab === 'inicio' && styles.tabLabelActive]}>Inicio</Text>
+          <TouchableOpacity style={styles.tabItem} onPress={() => setCurrentScreen('inicio')}>
+            <Text style={[styles.tabIcon, currentScreen === 'inicio' && styles.tabIconActive]}>🏠</Text>
+            <Text style={[styles.tabLabel, currentScreen === 'inicio' && styles.tabLabelActive]}>Inicio</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('productos')}>
-            <Text style={[styles.tabIcon, activeTab === 'productos' && styles.tabIconActive]}>🥖</Text>
-            <Text style={[styles.tabLabel, activeTab === 'productos' && styles.tabLabelActive]}>Productos</Text>
+          <TouchableOpacity style={styles.tabItem} onPress={() => setCurrentScreen('productos')}>
+            <Text style={[styles.tabIcon, currentScreen === 'productos' && styles.tabIconActive]}>🥖</Text>
+            <Text style={[styles.tabLabel, currentScreen === 'productos' && styles.tabLabelActive]}>Productos</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('carrito')}>
-            <Text style={[styles.tabIcon, activeTab === 'carrito' && styles.tabIconActive]}>🛒</Text>
-            <Text style={[styles.tabLabel, activeTab === 'carrito' && styles.tabLabelActive]}>Carrito</Text>
+          <TouchableOpacity style={styles.tabItem} onPress={() => setCurrentScreen('carrito')}>
+            <Text style={[styles.tabIcon, currentScreen === 'carrito' && styles.tabIconActive]}>🛒</Text>
+            <Text style={[styles.tabLabel, currentScreen === 'carrito' && styles.tabLabelActive]}>Carrito</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tabItem} onPress={() => setActiveTab('perfil')}>
-            <Text style={[styles.tabIcon, activeTab === 'perfil' && styles.tabIconActive]}>👤</Text>
-            <Text style={[styles.tabLabel, activeTab === 'perfil' && styles.tabLabelActive]}>Perfil</Text>
+          <TouchableOpacity style={styles.tabItem} onPress={() => Alert.alert('Perfil', 'Sesión de cliente activa')}>
+            <Text style={styles.tabIcon}>👤</Text>
+            <Text style={styles.tabLabel}>Perfil</Text>
           </TouchableOpacity>
         </View>
 
@@ -823,8 +872,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-
-  // ESTILOS BIENVENIDA (INCISO 1)
   welcomeCenter: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -916,8 +963,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-
-  // HEADER DE LA APLICACIÓN
   header: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -980,8 +1025,6 @@ const styles = StyleSheet.create({
     color: '#5B321B',
     fontWeight: '700',
   },
-
-  // HERO BANNER (INCISO 2)
   heroBanner: {
     width: '100%',
     height: 130,
@@ -1009,8 +1052,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     lineHeight: 24,
   },
-
-  // BUSCADOR Y CATEGORÍAS (INCISO 3)
   searchContainer: {
     marginBottom: 14,
   },
@@ -1047,8 +1088,6 @@ const styles = StyleSheet.create({
   categoryTextActive: {
     color: '#FFFFFF',
   },
-
-  // GRILLA DE PRODUCTOS
   gridContainer: {
     paddingHorizontal: 20,
     paddingBottom: 90,
@@ -1114,8 +1153,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: -2,
   },
-
-  // CARRITO (INCISO 4)
   cartScreenContainer: {
     flex: 1,
     paddingHorizontal: 20,
@@ -1235,8 +1272,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#5B321B',
   },
-
-  // PAGO Y ENTREGA (INCISO 5)
   simpleHeader: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -1248,14 +1283,6 @@ const styles = StyleSheet.create({
     color: '#D9764A',
     fontWeight: '700',
     fontSize: 14,
-  },
-  headerTitleCenter: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#5B321B',
-    marginRight: 60,
   },
   payOptionBox: {
     flexDirection: 'row',
@@ -1297,12 +1324,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#5B321B',
-    marginBottom: 8,
   },
   deliveryInput: {
+    flex: 1,
     backgroundColor: '#FFF7EB',
     borderRadius: 12,
-    padding: 12,
+    padding: 10,
     fontSize: 13,
     color: '#5B321B',
     borderWidth: 1,
@@ -1320,8 +1347,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-
-  // CONFIRMACIÓN (INCISO 6)
   confirmationBox: {
     width: '100%',
     maxWidth: 360,
@@ -1380,52 +1405,191 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  // PANEL ADMIN (INCISOS 9 Y 10)
-  adminHeader: {
+  // ESTILOS DE LA PANTALLA 9 (PANEL ADMIN MENÚ PRINCIPAL)
+  adminMainHeader: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 14,
+    backgroundColor: '#5B321B',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#5B321B',
   },
-  adminHeaderTitle: {
+  adminMainTitle: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '800',
   },
-  logoutAdminText: {
+  logoutAdminLink: {
     color: '#E8B565',
     fontWeight: '700',
     fontSize: 13,
   },
-  adminTabToggle: {
+  adminSubTabsBar: {
     flexDirection: 'row',
     backgroundColor: '#5B321B',
     paddingHorizontal: 20,
-    paddingBottom: 12,
-    gap: 10,
+    paddingBottom: 14,
+    gap: 12,
   },
-  adminTabBtn: {
+  adminSubTabActive: {
+    backgroundColor: '#D9764A',
     paddingVertical: 6,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.2)',
   },
-  adminTabBtnActive: {
-    backgroundColor: '#FFFFFF',
-  },
-  adminTabBtnText: {
+  adminSubTabTextActive: {
     color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  adminTabBtnTextActive: {
-    color: '#5B321B',
     fontWeight: '800',
     fontSize: 13,
   },
+  adminSubTabInactive: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingVertical: 6,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+  },
+  adminSubTabTextInactive: {
+    color: '#E8D2C1',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  adminMenuCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 22,
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E8D2C1',
+    shadowColor: '#5B321B',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  adminMenuCardIcon: {
+    fontSize: 28,
+    marginRight: 18,
+  },
+  adminMenuCardText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#5B321B',
+  },
+
+  // ESTILOS DE LA PANTALLA 10 (PANEL ADMIN VENTAS)
+  ventasHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  ventasTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#5B321B',
+  },
+  dropdownFilter: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E8D2C1',
+  },
+  dropdownFilterText: {
+    fontSize: 12,
+    color: '#7A5C47',
+    fontWeight: '600',
+  },
+  ventasMetricsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: '#E8D2C1',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  ventasMetricsLabel: {
+    fontSize: 12,
+    color: '#7A5C47',
+  },
+  ventasMetricsTotal: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#5B321B',
+    marginTop: 4,
+  },
+  ventasMetricsCount: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#D9764A',
+    marginTop: 4,
+  },
+  promedioBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E8D2C1',
+    marginBottom: 16,
+  },
+  promedioLabel: {
+    fontSize: 13,
+    color: '#7A5C47',
+    fontWeight: '600',
+  },
+  promedioValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#5B321B',
+  },
+  chartContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E8D2C1',
+    marginBottom: 30,
+  },
+  chartBarsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 150,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8D2C1',
+  },
+  bar: {
+    width: 24,
+    backgroundColor: '#D9764A',
+    borderRadius: 6,
+  },
+  chartLabelsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  chartLabel: {
+    fontSize: 11,
+    color: '#7A5C47',
+    width: 24,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+
+  // ADMIN ITEM ROW
   adminItemRow: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -1462,101 +1626,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 12,
   },
-  statsCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 18,
-    marginVertical: 14,
-    borderWidth: 1,
-    borderColor: '#E8D2C1',
-    alignItems: 'center',
-  },
-  statsLabel: {
-    fontSize: 13,
-    color: '#7A5C47',
-  },
-  statsValue: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#5B321B',
-    marginVertical: 4,
-  },
-  statsSub: {
-    fontSize: 13,
-    color: '#D9764A',
-    fontWeight: '700',
-  },
-  chartContainer: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#E8D2C1',
-    marginBottom: 30,
-  },
-  chartBarsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 150,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8D2C1',
-  },
-  bar: {
-    width: 24,
-    backgroundColor: '#D9764A',
-    borderRadius: 6,
-  },
-  chartLabelsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  chartLabel: {
-    fontSize: 11,
-    color: '#7A5C47',
-    width: 24,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-
-  // PERFIL
-  profileContainer: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  profileCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 18,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E8D2C1',
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#5B321B',
-  },
-  profileSub: {
-    fontSize: 13,
-    color: '#7A5C47',
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  logoutButton: {
-    backgroundColor: '#D9764A',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 14,
-  },
-  logoutButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-
-  // BARRA DE NAVEGACIÓN INFERIOR
   bottomTabBar: {
     position: 'absolute',
     bottom: 0,
@@ -1593,8 +1662,6 @@ const styles = StyleSheet.create({
     color: '#5B321B',
     fontWeight: '800',
   },
-
-  // ESTADOS DE CARGA
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -1635,7 +1702,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#5B321B',
+    marginBottom: 4,
+  },
+  modalHintText: {
+    fontSize: 12,
+    color: '#D9764A',
+    fontWeight: '600',
     marginBottom: 16,
+    textAlign: 'center',
   },
   modalInput: {
     width: '100%',
