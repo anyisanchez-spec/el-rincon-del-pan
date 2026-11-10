@@ -45,7 +45,7 @@ interface Trabajador {
   estado: 'Activo' | 'Inactivo';
 }
 
-// Catálogo de imágenes fijas de alta calidad para productos de panadería artesanal
+// Catálogo de imágenes fijas de alta calidad para panadería y rosquillas
 const BAKERY_IMAGES: Record<string, string> = {
   'rosquilla de maíz': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop',
   'rosquilla de maiz': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop',
@@ -55,37 +55,34 @@ const BAKERY_IMAGES: Record<string, string> = {
   'semita de yema': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
   'semita': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
   'pan casero': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
+  'pan': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
   'torta de queso': 'https://images.unsplash.com/photo-1535141192574-5d4897c13136?q=80&w=600&auto=format&fit=crop',
+  'torta': 'https://images.unsplash.com/photo-1535141192574-5d4897c13136?q=80&w=600&auto=format&fit=crop',
+  'sanita': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
   'repostería': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop',
 };
 
 const HERO_BANNER_IMG = 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=800';
 const WELCOME_HEADER_IMG = 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=800';
 
-// Asignador inteligente que filtra enlaces fallidos o aleatorios
-const getGuaranteedBakeryImage = (nombre?: string, categoria?: string, originalUrl?: string) => {
-  const nameLower = nombre?.toLowerCase().trim() || '';
-  const catLower = categoria?.toLowerCase().trim() || '';
+// Función forzada: ignora las URLs erróneas de Supabase y fuerza imágenes de panadería verdaderas
+const getGuaranteedBakeryImage = (nombre?: string, categoria?: string) => {
+  const nameLower = (nombre || '').toLowerCase().trim();
+  const catLower = (categoria || '').toLowerCase().trim();
 
-  // 1. Buscar coincidencias exactas por nombre del producto
-  for (const key in BAKERY_IMAGES) {
+  for (const key of Object.keys(BAKERY_IMAGES)) {
     if (nameLower.includes(key)) {
       return BAKERY_IMAGES[key];
     }
   }
 
-  // 2. Si es una URL de Supabase válida (que no sea un generador aleatorio picsum)
-  if (originalUrl && originalUrl.startsWith('http') && !originalUrl.includes('picsum.photos')) {
-    return originalUrl.replace('http://', 'https://');
-  }
-
-  // 3. Respaldo por categorías
   if (catLower.includes('rosquilla')) {
-    return 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop';
+    return BAKERY_IMAGES['rosquilla'];
   }
   if (catLower.includes('reposter')) {
-    return 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop';
+    return BAKERY_IMAGES['repostería'];
   }
+
   return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop';
 };
 
@@ -194,7 +191,7 @@ export default function HomeScreen() {
     setFilteredProducts(result);
   }, [searchQuery, selectedCategory, products]);
 
-  // Funciones Carrito
+  // Carrito
   const addToCart = (product: Producto) => {
     setCartItems(prev => {
       const existing = prev.find(item => item.product.id === product.id);
@@ -287,7 +284,7 @@ export default function HomeScreen() {
 
   const RenderProductCard = ({ item }: { item: Producto }) => {
     const numPrice = typeof item.precio === 'number' ? item.precio : parseFloat(item.precio as string) || 0;
-    const finalImgUri = getGuaranteedBakeryImage(item.nombre, item.categoria, item.imagen_url);
+    const finalImgUri = getGuaranteedBakeryImage(item.nombre, item.categoria);
 
     return (
       <View style={[styles.card, { width: cardWidth }]}>
@@ -750,7 +747,7 @@ export default function HomeScreen() {
 
           <ScrollView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }}>
             {products.map(p => {
-              const imgUri = getGuaranteedBakeryImage(p.nombre, p.categoria, p.imagen_url);
+              const imgUri = getGuaranteedBakeryImage(p.nombre, p.categoria);
               return (
                 <View key={p.id} style={styles.adminItemRow}>
                   <Image source={{ uri: imgUri }} style={styles.adminItemImage} />
@@ -880,7 +877,7 @@ export default function HomeScreen() {
                   const itemPrice = typeof item.product.precio === 'number'
                     ? item.product.precio
                     : parseFloat(item.product.precio as string) || 0;
-                  const itemImg = getGuaranteedBakeryImage(item.product.nombre, item.product.categoria, item.product.imagen_url);
+                  const itemImg = getGuaranteedBakeryImage(item.product.nombre, item.product.categoria);
 
                   return (
                     <View key={item.product.id} style={styles.cartItemRow}>
@@ -1585,7 +1582,6 @@ const styles = StyleSheet.create({
     color: '#5B321B',
     marginTop: 2,
   },
-
   adminMainHeader: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -1659,7 +1655,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#5B321B',
   },
-
   staffCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -1697,7 +1692,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
   },
-
   reportItemCard: {
     backgroundColor: '#FFFFFF',
     padding: 14,
@@ -1731,7 +1725,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     fontWeight: '600',
   },
-
   configCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -1770,7 +1763,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#5B321B',
   },
-
   ventasHeader: {
     paddingHorizontal: 20,
     paddingTop: 16,
@@ -1878,7 +1870,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
   },
-
   adminItemRow: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
