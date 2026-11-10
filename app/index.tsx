@@ -45,46 +45,119 @@ interface Trabajador {
   estado: 'Activo' | 'Inactivo';
 }
 
-// Catálogo de imágenes fijas de alta calidad para panadería y rosquillas
-const BAKERY_IMAGES: Record<string, string> = {
+// Mapeo exhaustivo de imágenes fijas en alta resolución por producto
+const GUARANTEED_IMAGES: Record<string, string> = {
+  // --- ROSQUILLAS ---
   'rosquilla de maíz': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop',
   'rosquilla de maiz': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop',
   'rosquillas de cuajada': 'https://images.unsplash.com/photo-1579372786545-d24232daf58c?q=80&w=600&auto=format&fit=crop',
-  'rosquilla': 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop',
-  'rosquillas': 'https://images.unsplash.com/photo-1579372786545-d24232daf58c?q=80&w=600&auto=format&fit=crop',
-  'semita de yema': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
-  'semita': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
+  'tostadas de maíz': 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec?q=80&w=600&auto=format&fit=crop',
+  'tostadas de maiz': 'https://images.unsplash.com/photo-1608198093002-ad4e005484ec?q=80&w=600&auto=format&fit=crop',
+
+  // --- PANES ---
   'pan casero': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
-  'pan': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
+  'semita de yema': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
+  'panes / croissants': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=600&auto=format&fit=crop',
+  'croissants': 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=600&auto=format&fit=crop',
+  'pan de molde artesanal': 'https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?q=80&w=600&auto=format&fit=crop',
+  'pan integral': 'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?q=80&w=600&auto=format&fit=crop',
+  'pan de ajo': 'https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?q=80&w=600&auto=format&fit=crop',
+
+  // --- REPOSTERÍA & TORTAS ---
+  'quesadilla hondureña': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
+  'pastel de chocolate': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop',
+  'empanada de piña': 'https://images.unsplash.com/photo-1621996346565-e3d5d6281288?q=80&w=600&auto=format&fit=crop',
+  'empanada de pina': 'https://images.unsplash.com/photo-1621996346565-e3d5d6281288?q=80&w=600&auto=format&fit=crop',
+  'dona glaseada': 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=600&auto=format&fit=crop',
+  'torta de mínimo (banano)': 'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?q=80&w=600&auto=format&fit=crop',
+  'torta de minimo': 'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?q=80&w=600&auto=format&fit=crop',
   'torta de queso': 'https://images.unsplash.com/photo-1535141192574-5d4897c13136?q=80&w=600&auto=format&fit=crop',
-  'torta': 'https://images.unsplash.com/photo-1535141192574-5d4897c13136?q=80&w=600&auto=format&fit=crop',
-  'sanita': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
-  'repostería': 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop',
+  'torta de zanahoria': 'https://images.unsplash.com/photo-1621303837174-89787a7d4729?q=80&w=600&auto=format&fit=crop',
+  'torta de elote': 'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?q=80&w=600&auto=format&fit=crop',
+  'torta de mantequilla': 'https://images.unsplash.com/photo-1519869325930-281384150729?q=80&w=600&auto=format&fit=crop',
+  'torta de levadura': 'https://images.unsplash.com/photo-1586444248902-2f64eddc1324?q=80&w=600&auto=format&fit=crop',
+
+  // --- BEBIDAS ---
+  'café capuchino caliente': 'https://images.unsplash.com/photo-1534778101976-62847782c213?q=80&w=600&auto=format&fit=crop',
+  'cafe capuchino caliente': 'https://images.unsplash.com/photo-1534778101976-62847782c213?q=80&w=600&auto=format&fit=crop',
+  'chocolate caliente': 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?q=80&w=600&auto=format&fit=crop',
+  'café helado (iced latte)': 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?q=80&w=600&auto=format&fit=crop',
+  'cafe helado': 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?q=80&w=600&auto=format&fit=crop',
+  'jugo natural de naranja': 'https://images.unsplash.com/photo-1613478223719-2ab802602423?q=80&w=600&auto=format&fit=crop',
+
+  // --- DESPENSA / ARTESANALES ---
+  'café en grano (1 lb)': 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=600&auto=format&fit=crop',
+  'cafe en grano': 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=600&auto=format&fit=crop',
+  'café molido gourmet (1 lb)': 'https://images.unsplash.com/photo-1587734195503-904fca47e0e9?q=80&w=600&auto=format&fit=crop',
+  'cafe molido': 'https://images.unsplash.com/photo-1587734195503-904fca47e0e9?q=80&w=600&auto=format&fit=crop',
+  'miel de abeja pura': 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?q=80&w=600&auto=format&fit=crop',
+  'cúrcuma orgánica molida': 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?q=80&w=600&auto=format&fit=crop',
+  'curcuma organica molida': 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?q=80&w=600&auto=format&fit=crop',
+  'cacao & chocolate artesanal': 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?q=80&w=600&auto=format&fit=crop',
+  'cacao': 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?q=80&w=600&auto=format&fit=crop',
 };
 
 const HERO_BANNER_IMG = 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=800';
 const WELCOME_HEADER_IMG = 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=800';
 
-// Función forzada: ignora las URLs erróneas de Supabase y fuerza imágenes de panadería verdaderas
 const getGuaranteedBakeryImage = (nombre?: string, categoria?: string) => {
   const nameLower = (nombre || '').toLowerCase().trim();
   const catLower = (categoria || '').toLowerCase().trim();
 
-  for (const key of Object.keys(BAKERY_IMAGES)) {
+  for (const key of Object.keys(GUARANTEED_IMAGES)) {
     if (nameLower.includes(key)) {
-      return BAKERY_IMAGES[key];
+      return GUARANTEED_IMAGES[key];
     }
   }
 
-  if (catLower.includes('rosquilla')) {
-    return BAKERY_IMAGES['rosquilla'];
-  }
-  if (catLower.includes('reposter')) {
-    return BAKERY_IMAGES['repostería'];
-  }
+  if (catLower.includes('rosquilla')) return 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=600&auto=format&fit=crop';
+  if (catLower.includes('bebida')) return 'https://images.unsplash.com/photo-1534778101976-62847782c213?q=80&w=600&auto=format&fit=crop';
+  if (catLower.includes('despensa')) return 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=600&auto=format&fit=crop';
+  if (catLower.includes('reposter')) return 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=600&auto=format&fit=crop';
 
   return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop';
 };
+
+// Catálogo completo por defecto
+const FULL_PRODUCTS_CATALOG: Producto[] = [
+  // Panes
+  { id: 1, nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan' },
+  { id: 2, nombre: 'Semita de Yema', precio: 15.00, categoria: 'Pan' },
+  { id: 3, nombre: 'Panes / Croissants', precio: 12.00, categoria: 'Pan' },
+  { id: 4, nombre: 'Pan de Molde Artesanal', precio: 50.00, categoria: 'Pan' },
+  { id: 5, nombre: 'Pan Integral', precio: 22.00, categoria: 'Pan' },
+  { id: 6, nombre: 'Pan de Ajo', precio: 25.00, categoria: 'Pan' },
+
+  // Repostería
+  { id: 7, nombre: 'Quesadilla Hondureña', precio: 25.00, categoria: 'Repostería' },
+  { id: 8, nombre: 'Pastel de Chocolate', precio: 45.00, categoria: 'Repostería' },
+  { id: 9, nombre: 'Empanada de Piña', precio: 18.00, categoria: 'Repostería' },
+  { id: 10, nombre: 'Dona Glaseada', precio: 20.00, categoria: 'Repostería' },
+  { id: 11, nombre: 'Torta de Mínimo (Banano)', precio: 30.00, categoria: 'Repostería' },
+  { id: 12, nombre: 'Torta de Queso', precio: 35.00, categoria: 'Repostería' },
+  { id: 13, nombre: 'Torta de Zanahoria', precio: 35.00, categoria: 'Repostería' },
+  { id: 14, nombre: 'Torta de Elote', precio: 30.00, categoria: 'Repostería' },
+  { id: 15, nombre: 'Torta de Mantequilla', precio: 28.00, categoria: 'Repostería' },
+  { id: 16, nombre: 'Torta de Levadura', precio: 25.00, categoria: 'Repostería' },
+
+  // Rosquillas
+  { id: 17, nombre: 'Rosquilla de Maíz', precio: 12.00, categoria: 'Rosquillas' },
+  { id: 18, nombre: 'Rosquillas de Cuajada', precio: 15.00, categoria: 'Rosquillas' },
+  { id: 19, nombre: 'Tostadas de Maíz', precio: 18.00, categoria: 'Rosquillas' },
+
+  // Bebidas
+  { id: 20, nombre: 'Café Capuchino Caliente', precio: 35.00, categoria: 'Bebidas' },
+  { id: 21, nombre: 'Chocolate Caliente', precio: 30.00, categoria: 'Bebidas' },
+  { id: 22, nombre: 'Café Helado (Iced Latte)', precio: 40.00, categoria: 'Bebidas' },
+  { id: 23, nombre: 'Jugo Natural de Naranja', precio: 25.00, categoria: 'Bebidas' },
+
+  // Despensa
+  { id: 24, nombre: 'Café en Grano (1 lb)', precio: 120.00, categoria: 'Despensa' },
+  { id: 25, nombre: 'Café Molido Gourmet (1 lb)', precio: 110.00, categoria: 'Despensa' },
+  { id: 26, nombre: 'Miel de Abeja Pura', precio: 90.00, categoria: 'Despensa' },
+  { id: 27, nombre: 'Cúrcuma Orgánica Molida', precio: 65.00, categoria: 'Despensa' },
+  { id: 28, nombre: 'Cacao & Chocolate Artesanal', precio: 75.00, categoria: 'Despensa' },
+];
 
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
@@ -104,7 +177,7 @@ export default function HomeScreen() {
       quantity: 1
     },
     {
-      product: { id: 'c2', nombre: 'Semita de Yema', precio: 20.00, categoria: 'Pan' },
+      product: { id: 'c2', nombre: 'Semita de Yema', precio: 15.00, categoria: 'Pan' },
       quantity: 1
     }
   ]);
@@ -132,14 +205,14 @@ export default function HomeScreen() {
   const [adminUser, setAdminUser] = useState('admin');
   const [adminPassword, setAdminPassword] = useState('1234');
 
-  // Productos desde Supabase
+  // Productos
   const [products, setProducts] = useState<Producto[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Producto[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [loading, setLoading] = useState(true);
 
-  const categories = ['Todos', 'Pan', 'Repostería', 'Rosquillas'];
+  const categories = ['Todos', 'Pan', 'Repostería', 'Rosquillas', 'Bebidas', 'Despensa'];
 
   const fetchProducts = async () => {
     try {
@@ -148,22 +221,17 @@ export default function HomeScreen() {
 
       if (error) console.log('Aviso Supabase:', error.message);
 
-      if (data && data.length > 0) {
+      if (data && data.length > 5) {
         setProducts(data);
         setFilteredProducts(data);
       } else {
-        const initialMock: Producto[] = [
-          { id: 1, nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan' },
-          { id: 2, nombre: 'Semita de Yema', precio: 15.00, categoria: 'Pan' },
-          { id: 3, nombre: 'Rosquilla de Maíz', precio: 12.00, categoria: 'Rosquillas' },
-          { id: 4, nombre: 'Rosquillas de Cuajada', precio: 15.00, categoria: 'Rosquillas' },
-          { id: 5, nombre: 'Torta de queso', precio: 30.00, categoria: 'Repostería' }
-        ];
-        setProducts(initialMock);
-        setFilteredProducts(initialMock);
+        setProducts(FULL_PRODUCTS_CATALOG);
+        setFilteredProducts(FULL_PRODUCTS_CATALOG);
       }
     } catch (e) {
       console.log('Error al obtener productos', e);
+      setProducts(FULL_PRODUCTS_CATALOG);
+      setFilteredProducts(FULL_PRODUCTS_CATALOG);
     } finally {
       setLoading(false);
     }
@@ -238,13 +306,11 @@ export default function HomeScreen() {
   const shippingFee = cartItems.length > 0 ? parsedShipping : 0.00;
   const grandTotal = subtotal + shippingFee;
 
-  // Acceso Admin
   const handleAdminLogin = () => {
     setShowLoginModal(false);
     setCurrentScreen('admin_menu');
   };
 
-  // Google OAuth
   const handleGoogleLogin = async () => {
     try {
       const redirectUrl = Linking.createURL('/');
@@ -362,7 +428,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Modal Admin */}
         <Modal visible={showLoginModal} animationType="slide" transparent={true}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
@@ -829,7 +894,7 @@ export default function HomeScreen() {
     );
   }
 
-  // 2, 3 Y 4: CLIENTE
+  // CLIENTE (INICIO / PRODUCTOS / CARRITO)
   return (
     <SafeAreaView style={styles.outerContainer}>
       <StatusBar barStyle="dark-content" />
@@ -934,7 +999,8 @@ export default function HomeScreen() {
               numColumns={2}
               columnWrapperStyle={styles.rowWrapper}
               contentContainerStyle={styles.gridContainer}
-              showsVerticalScrollIndicator={false}
+              showsVerticalScrollIndicator={true}
+              style={{ flex: 1 }}
               ListHeaderComponent={
                 <>
                   {currentScreen === 'inicio' && (
@@ -1260,7 +1326,7 @@ const styles = StyleSheet.create({
   },
   gridContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 90,
+    paddingBottom: 110,
   },
   rowWrapper: {
     justifyContent: 'space-between',
