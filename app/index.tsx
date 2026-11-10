@@ -6,7 +6,6 @@ import {
   FlatList,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   Alert,
   Image,
   SafeAreaView,
@@ -45,7 +44,6 @@ interface Trabajador {
   estado: 'Activo' | 'Inactivo';
 }
 
-// Búsqueda sin acentos para emparejar nombres de productos
 const normalizeText = (text?: string) => {
   return (text || '')
     .toLowerCase()
@@ -54,20 +52,12 @@ const normalizeText = (text?: string) => {
     .trim();
 };
 
-// Galería garantizada de fotos reales y directas de Pexels en alta resolución
+// Galería ajustada con fotos exactas a las proporcionadas
 const GUARANTEED_IMAGES: Record<string, string> = {
-  // --- ROSQUILLAS ---
-  'rosquilla de maiz': 'https://images.pexels.com/photos/4109998/pexels-photo-4109998.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'rosquilla': 'https://images.pexels.com/photos/4109998/pexels-photo-4109998.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'rosquillas de cuajada': 'https://images.pexels.com/photos/3779937/pexels-photo-3779937.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'rosquillas': 'https://images.pexels.com/photos/3779937/pexels-photo-3779937.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'tostadas de maiz': 'https://images.pexels.com/photos/5682474/pexels-photo-5682474.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'tostadas': 'https://images.pexels.com/photos/5682474/pexels-photo-5682474.jpeg?auto=compress&cs=tinysrgb&w=600',
-
   // --- PANES ---
   'pan casero': 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'semita de yema': 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'semita': 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'semita de yema': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
+  'semita': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
   'panes / croissants': 'https://images.pexels.com/photos/3892469/pexels-photo-3892469.jpeg?auto=compress&cs=tinysrgb&w=600',
   'croissants': 'https://images.pexels.com/photos/3892469/pexels-photo-3892469.jpeg?auto=compress&cs=tinysrgb&w=600',
   'pan de molde artesanal': 'https://images.pexels.com/photos/1586947/pexels-photo-1586947.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -78,8 +68,8 @@ const GUARANTEED_IMAGES: Record<string, string> = {
   'quesadilla hondurena': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
   'quesadilla': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
   'pastel de chocolate': 'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'empanada de pina': 'https://images.pexels.com/photos/2693447/pexels-photo-2693447.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'empanada': 'https://images.pexels.com/photos/2693447/pexels-photo-2693447.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'empanada de pina': 'https://images.unsplash.com/photo-1621996346565-e3d5d6281288?q=80&w=600&auto=format&fit=crop',
+  'empanada': 'https://images.unsplash.com/photo-1621996346565-e3d5d6281288?q=80&w=600&auto=format&fit=crop',
   'dona glaseada': 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=600',
   'dona': 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=600',
   'torta de minimo (banano)': 'https://images.pexels.com/photos/830894/pexels-photo-830894.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -88,7 +78,7 @@ const GUARANTEED_IMAGES: Record<string, string> = {
   'torta de zanahoria': 'https://images.pexels.com/photos/14107/pexels-photo-14107.jpeg?auto=compress&cs=tinysrgb&w=600',
   'torta de elote': 'https://images.pexels.com/photos/709841/pexels-photo-709841.jpeg?auto=compress&cs=tinysrgb&w=600',
   'torta de mantequilla': 'https://images.pexels.com/photos/1055272/pexels-photo-1055272.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de levadura': 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de levadura': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
 
   // --- BEBIDAS ---
   'cafe capuchino caliente': 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -96,9 +86,9 @@ const GUARANTEED_IMAGES: Record<string, string> = {
   'cafe helado (iced latte)': 'https://images.pexels.com/photos/2615323/pexels-photo-2615323.jpeg?auto=compress&cs=tinysrgb&w=600',
   'jugo natural de naranja': 'https://images.pexels.com/photos/1337825/pexels-photo-1337825.jpeg?auto=compress&cs=tinysrgb&w=600',
 
-  // --- DESPENSA / ARTESANALES ---
+  // --- DESPENSA ---
   'cafe en grano (1 lb)': 'https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'cafe molido gourmet (1 lb)': 'https://images.pexels.com/photos/373639/pexels-photo-373639.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'cafe molido gourmet (1 lb)': 'https://images.pexels.com/photos/585750/pexels-photo-585750.jpeg?auto=compress&cs=tinysrgb&w=600',
   'miel de abeja pura': 'https://images.pexels.com/photos/33260/honey-sweet-syrup-organic.jpg?auto=compress&cs=tinysrgb&w=600',
   'curcuma organica molida': 'https://images.pexels.com/photos/1340116/pexels-photo-1340116.jpeg?auto=compress&cs=tinysrgb&w=600',
   'cacao & chocolate artesanal': 'https://images.pexels.com/photos/65882/chocolate-dark-coffee-confiserie-65882.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -117,7 +107,6 @@ const getGuaranteedBakeryImage = (nombre?: string, categoria?: string) => {
     }
   }
 
-  if (normCat.includes('rosquilla')) return GUARANTEED_IMAGES['rosquilla de maiz'];
   if (normCat.includes('bebida')) return GUARANTEED_IMAGES['cafe capuchino caliente'];
   if (normCat.includes('despensa')) return GUARANTEED_IMAGES['cafe en grano (1 lb)'];
   if (normCat.includes('reposter')) return GUARANTEED_IMAGES['quesadilla hondurena'];
@@ -145,11 +134,6 @@ const FULL_PRODUCTS_CATALOG: Producto[] = [
   { id: 14, nombre: 'Torta de Elote', precio: 30.00, categoria: 'Repostería' },
   { id: 15, nombre: 'Torta de Mantequilla', precio: 28.00, categoria: 'Repostería' },
   { id: 16, nombre: 'Torta de Levadura', precio: 25.00, categoria: 'Repostería' },
-
-  // Rosquillas
-  { id: 17, nombre: 'Rosquilla de Maíz', precio: 12.00, categoria: 'Rosquillas' },
-  { id: 18, nombre: 'Rosquillas de Cuajada', precio: 15.00, categoria: 'Rosquillas' },
-  { id: 19, nombre: 'Tostadas de Maíz', precio: 18.00, categoria: 'Rosquillas' },
 
   // Bebidas
   { id: 20, nombre: 'Café Capuchino Caliente', precio: 35.00, categoria: 'Bebidas' },
@@ -216,17 +200,24 @@ export default function HomeScreen() {
   const [filteredProducts, setFilteredProducts] = useState<Producto[]>(FULL_PRODUCTS_CATALOG);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
-  const [loading, setLoading] = useState(false);
 
-  const categories = ['Todos', 'Pan', 'Repostería', 'Rosquillas', 'Bebidas', 'Despensa'];
+  const categories = ['Todos', 'Pan', 'Repostería', 'Bebidas', 'Despensa'];
 
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase.from('productos').select('*');
       if (error) console.log('Aviso Supabase:', error.message);
 
-      if (data && data.length > 5) {
-        setProducts(data);
+      if (data && data.length > 0) {
+        const filteredSupabase = data.filter(p => normalizeText(p.categoria) !== 'rosquillas');
+        const merged = [...FULL_PRODUCTS_CATALOG];
+        
+        filteredSupabase.forEach(sp => {
+          if (!merged.some(m => normalizeText(m.nombre) === normalizeText(sp.nombre))) {
+            merged.push(sp);
+          }
+        });
+        setProducts(merged);
       } else {
         setProducts(FULL_PRODUCTS_CATALOG);
       }
@@ -241,7 +232,7 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    let result = products;
+    let result = products.filter(item => normalizeText(item.categoria) !== 'rosquillas');
 
     if (selectedCategory !== 'Todos') {
       result = result.filter(
@@ -378,7 +369,6 @@ export default function HomeScreen() {
     );
   };
 
-  // 1. BIENVENIDA
   if (currentScreen === 'bienvenida') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -468,7 +458,6 @@ export default function HomeScreen() {
     );
   }
 
-  // 5. PAGO Y ENTREGA
   if (currentScreen === 'pago') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -543,7 +532,6 @@ export default function HomeScreen() {
     );
   }
 
-  // 6. CONFIRMACIÓN
   if (currentScreen === 'confirmacion') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -577,7 +565,6 @@ export default function HomeScreen() {
     );
   }
 
-  // 9. PANEL ADMIN MENÚ
   if (currentScreen === 'admin_menu') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -680,7 +667,6 @@ export default function HomeScreen() {
     );
   }
 
-  // REPORTES ADMIN
   if (currentScreen === 'admin_reportes') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -707,15 +693,15 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.reportItemCard}>
-              <Text style={styles.reportItemName}>3. Rosquillas de Cuajada</Text>
+              <Text style={styles.reportItemName}>3. Quesadilla Hondureña</Text>
               <Text style={styles.reportItemStat}>80 unidades vendidas</Text>
             </View>
 
             <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Resumen de Insumos</Text>
             <View style={styles.reportSummaryBox}>
               <Text style={styles.reportSummaryText}>• Harina de Trigo: 85% de stock</Text>
-              <Text style={styles.reportSummaryText}>• Cuajada Fresca: 70% de stock</Text>
-              <Text style={styles.reportSummaryText}>• Manteca y Azúcar: Reabastecido</Text>
+              <Text style={styles.reportSummaryText}>• Café en Grano: 90% de stock</Text>
+              <Text style={styles.reportSummaryText}>• Miel & Manteca: Reabastecido</Text>
             </View>
 
             <TouchableOpacity 
@@ -730,7 +716,6 @@ export default function HomeScreen() {
     );
   }
 
-  // CONFIGURACIÓN ADMIN
   if (currentScreen === 'admin_config') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -796,7 +781,6 @@ export default function HomeScreen() {
     );
   }
 
-  // PEDIDOS ADMIN
   if (currentScreen === 'admin_pedidos') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -831,7 +815,6 @@ export default function HomeScreen() {
     );
   }
 
-  // 10. VENTAS ADMIN
   if (currentScreen === 'admin_ventas') {
     return (
       <SafeAreaView style={styles.outerContainer}>
@@ -893,7 +876,6 @@ export default function HomeScreen() {
     );
   }
 
-  // CLIENTE (INICIO / PRODUCTOS / CARRITO)
   return (
     <SafeAreaView style={styles.outerContainer}>
       <StatusBar barStyle="dark-content" />
@@ -1995,17 +1977,6 @@ const styles = StyleSheet.create({
   tabLabelActive: {
     color: '#5B321B',
     fontWeight: '800',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#5B321B',
-    fontSize: 14,
-    fontWeight: '600',
   },
   emptyContainer: {
     alignItems: 'center',
