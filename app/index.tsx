@@ -44,7 +44,7 @@ interface Trabajador {
   estado: 'Activo' | 'Inactivo';
 }
 
-const normalizeText = (text?: string) => {
+const normalizeText = (text?: string): string => {
   return (text || '')
     .toLowerCase()
     .normalize('NFD')
@@ -52,9 +52,21 @@ const normalizeText = (text?: string) => {
     .trim();
 };
 
-// Galería ajustada con fotos exactas a las proporcionadas
+const matchesCategory = (itemCat?: string, targetCat?: string): boolean => {
+  if (!targetCat || targetCat === 'Todos') return true;
+  const c1 = normalizeText(itemCat);
+  const c2 = normalizeText(targetCat);
+
+  if (c1 === c2) return true;
+  if (c2 === 'bebidas' && (c1.includes('bebida') || c1.includes('jugo') || c1.includes('cafe') || c1.includes('chocolate'))) return true;
+  if (c2 === 'despensa' && (c1.includes('despensa') || c1.includes('grano') || c1.includes('miel') || c1.includes('curcuma'))) return true;
+  if (c2 === 'pan' && (c1.includes('pan') || c1.includes('semita') || c1.includes('croissant'))) return true;
+  if (c2 === 'reposteria' && (c1.includes('reposter') || c1.includes('empanada') || c1.includes('dona') || c1.includes('pastel') || c1.includes('torta') || c1.includes('quesadilla'))) return true;
+
+  return c1.includes(c2) || c2.includes(c1);
+};
+
 const GUARANTEED_IMAGES: Record<string, string> = {
-  // --- PANES ---
   'pan casero': 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=600',
   'semita de yema': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
   'semita': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
@@ -64,7 +76,6 @@ const GUARANTEED_IMAGES: Record<string, string> = {
   'pan integral': 'https://images.pexels.com/photos/1756062/pexels-photo-1756062.jpeg?auto=compress&cs=tinysrgb&w=600',
   'pan de ajo': 'https://images.pexels.com/photos/6287522/pexels-photo-6287522.jpeg?auto=compress&cs=tinysrgb&w=600',
 
-  // --- REPOSTERÍA & TORTAS ---
   'quesadilla hondurena': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
   'quesadilla': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
   'pastel de chocolate': 'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -80,13 +91,11 @@ const GUARANTEED_IMAGES: Record<string, string> = {
   'torta de mantequilla': 'https://images.pexels.com/photos/1055272/pexels-photo-1055272.jpeg?auto=compress&cs=tinysrgb&w=600',
   'torta de levadura': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
 
-  // --- BEBIDAS ---
   'cafe capuchino caliente': 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=600',
   'chocolate caliente': 'https://images.pexels.com/photos/373639/pexels-photo-373639.jpeg?auto=compress&cs=tinysrgb&w=600',
   'cafe helado (iced latte)': 'https://images.pexels.com/photos/2615323/pexels-photo-2615323.jpeg?auto=compress&cs=tinysrgb&w=600',
   'jugo natural de naranja': 'https://images.pexels.com/photos/1337825/pexels-photo-1337825.jpeg?auto=compress&cs=tinysrgb&w=600',
 
-  // --- DESPENSA ---
   'cafe en grano (1 lb)': 'https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=600',
   'cafe molido gourmet (1 lb)': 'https://images.pexels.com/photos/585750/pexels-photo-585750.jpeg?auto=compress&cs=tinysrgb&w=600',
   'miel de abeja pura': 'https://images.pexels.com/photos/33260/honey-sweet-syrup-organic.jpg?auto=compress&cs=tinysrgb&w=600',
@@ -97,7 +106,7 @@ const GUARANTEED_IMAGES: Record<string, string> = {
 const HERO_BANNER_IMG = 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=800';
 const WELCOME_HEADER_IMG = 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=800';
 
-const getGuaranteedBakeryImage = (nombre?: string, categoria?: string) => {
+const getGuaranteedBakeryImage = (nombre?: string, categoria?: string): string => {
   const normName = normalizeText(nombre);
   const normCat = normalizeText(categoria);
 
@@ -115,38 +124,34 @@ const getGuaranteedBakeryImage = (nombre?: string, categoria?: string) => {
 };
 
 const FULL_PRODUCTS_CATALOG: Producto[] = [
-  // Panes
-  { id: 1, nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan' },
-  { id: 2, nombre: 'Semita de Yema', precio: 15.00, categoria: 'Pan' },
-  { id: 3, nombre: 'Panes / Croissants', precio: 12.00, categoria: 'Pan' },
-  { id: 4, nombre: 'Pan de Molde Artesanal', precio: 50.00, categoria: 'Pan' },
-  { id: 5, nombre: 'Pan Integral', precio: 22.00, categoria: 'Pan' },
-  { id: 6, nombre: 'Pan de Ajo', precio: 25.00, categoria: 'Pan' },
+  { id: 'p1', nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan' },
+  { id: 'p2', nombre: 'Semita de Yema', precio: 15.00, categoria: 'Pan' },
+  { id: 'p3', nombre: 'Panes / Croissants', precio: 12.00, categoria: 'Pan' },
+  { id: 'p4', nombre: 'Pan de Molde Artesanal', precio: 50.00, categoria: 'Pan' },
+  { id: 'p5', nombre: 'Pan Integral', precio: 22.00, categoria: 'Pan' },
+  { id: 'p6', nombre: 'Pan de Ajo', precio: 25.00, categoria: 'Pan' },
 
-  // Repostería
-  { id: 7, nombre: 'Quesadilla Hondureña', precio: 25.00, categoria: 'Repostería' },
-  { id: 8, nombre: 'Pastel de Chocolate', precio: 45.00, categoria: 'Repostería' },
-  { id: 9, nombre: 'Empanada de Piña', precio: 18.00, categoria: 'Repostería' },
-  { id: 10, nombre: 'Dona Glaseada', precio: 20.00, categoria: 'Repostería' },
-  { id: 11, nombre: 'Torta de Mínimo (Banano)', precio: 30.00, categoria: 'Repostería' },
-  { id: 12, nombre: 'Torta de Queso', precio: 35.00, categoria: 'Repostería' },
-  { id: 13, nombre: 'Torta de Zanahoria', precio: 35.00, categoria: 'Repostería' },
-  { id: 14, nombre: 'Torta de Elote', precio: 30.00, categoria: 'Repostería' },
-  { id: 15, nombre: 'Torta de Mantequilla', precio: 28.00, categoria: 'Repostería' },
-  { id: 16, nombre: 'Torta de Levadura', precio: 25.00, categoria: 'Repostería' },
+  { id: 'p7', nombre: 'Quesadilla Hondureña', precio: 25.00, categoria: 'Repostería' },
+  { id: 'p8', nombre: 'Pastel de Chocolate', precio: 45.00, categoria: 'Repostería' },
+  { id: 'p9', nombre: 'Empanada de Piña', precio: 18.00, categoria: 'Repostería' },
+  { id: 'p10', nombre: 'Dona Glaseada', precio: 20.00, categoria: 'Repostería' },
+  { id: 'p11', nombre: 'Torta de Mínimo (Banano)', precio: 30.00, categoria: 'Repostería' },
+  { id: 'p12', nombre: 'Torta de Queso', precio: 35.00, categoria: 'Repostería' },
+  { id: 'p13', nombre: 'Torta de Zanahoria', precio: 35.00, categoria: 'Repostería' },
+  { id: 'p14', nombre: 'Torta de Elote', precio: 30.00, categoria: 'Repostería' },
+  { id: 'p15', nombre: 'Torta de Mantequilla', precio: 28.00, categoria: 'Repostería' },
+  { id: 'p16', nombre: 'Torta de Levadura', precio: 25.00, categoria: 'Repostería' },
 
-  // Bebidas
-  { id: 20, nombre: 'Café Capuchino Caliente', precio: 35.00, categoria: 'Bebidas' },
-  { id: 21, nombre: 'Chocolate Caliente', precio: 30.00, categoria: 'Bebidas' },
-  { id: 22, nombre: 'Café Helado (Iced Latte)', precio: 40.00, categoria: 'Bebidas' },
-  { id: 23, nombre: 'Jugo Natural de Naranja', precio: 25.00, categoria: 'Bebidas' },
+  { id: 'p20', nombre: 'Café Capuchino Caliente', precio: 35.00, categoria: 'Bebidas' },
+  { id: 'p21', nombre: 'Chocolate Caliente', precio: 30.00, categoria: 'Bebidas' },
+  { id: 'p22', nombre: 'Café Helado (Iced Latte)', precio: 40.00, categoria: 'Bebidas' },
+  { id: 'p23', nombre: 'Jugo Natural de Naranja', precio: 25.00, categoria: 'Bebidas' },
 
-  // Despensa
-  { id: 24, nombre: 'Café en Grano (1 lb)', precio: 120.00, categoria: 'Despensa' },
-  { id: 25, nombre: 'Café Molido Gourmet (1 lb)', precio: 110.00, categoria: 'Despensa' },
-  { id: 26, nombre: 'Miel de Abeja Pura', precio: 90.00, categoria: 'Despensa' },
-  { id: 27, nombre: 'Cúrcuma Orgánica Molida', precio: 65.00, categoria: 'Despensa' },
-  { id: 28, nombre: 'Cacao & Chocolate Artesanal', precio: 75.00, categoria: 'Despensa' },
+  { id: 'p24', nombre: 'Café en Grano (1 lb)', precio: 120.00, categoria: 'Despensa' },
+  { id: 'p25', nombre: 'Café Molido Gourmet (1 lb)', precio: 110.00, categoria: 'Despensa' },
+  { id: 'p26', nombre: 'Miel de Abeja Pura', precio: 90.00, categoria: 'Despensa' },
+  { id: 'p27', nombre: 'Cúrcuma Orgánica Molida', precio: 65.00, categoria: 'Despensa' },
+  { id: 'p28', nombre: 'Cacao & Chocolate Artesanal', precio: 75.00, categoria: 'Despensa' },
 ];
 
 export default function HomeScreen() {
@@ -160,7 +165,6 @@ export default function HomeScreen() {
 
   const [adminSubTab, setAdminSubTab] = useState<'directo' | 'trabajadores'>('directo');
 
-  // Carrito de compras
   const [cartItems, setCartItems] = useState<CartItem[]>([
     {
       product: { id: 'c1', nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan' },
@@ -172,30 +176,25 @@ export default function HomeScreen() {
     }
   ]);
 
-  // Configuración
   const [shippingFeeInput, setShippingFeeInput] = useState('15.00');
   const [openingHours, setOpeningHours] = useState('06:00 AM - 07:00 PM');
   const [cashEnabled, setCashEnabled] = useState(true);
   const [transferEnabled, setTransferEnabled] = useState(true);
 
-  // Trabajadores
   const [trabajadores] = useState<Trabajador[]>([
     { id: 1, nombre: 'Carlos López', rol: 'Maestro Panadero', horario: '05:00 AM - 01:00 PM', estado: 'Activo' },
     { id: 2, nombre: 'Ana Martínez', rol: 'Cajera', horario: '07:00 AM - 03:00 PM', estado: 'Activo' },
     { id: 3, nombre: 'Pedro Ramos', rol: 'Repartidor', horario: '08:00 AM - 04:00 PM', estado: 'Activo' }
   ]);
 
-  // Formulario Pago
   const [paymentMethod, setPaymentMethod] = useState<'efectivo' | 'transferencia'>('efectivo');
   const [deliveryAddress, setDeliveryAddress] = useState('Col. Los Pinos, Casa 123, San Pedro Sula, Cortés');
   const [lastOrderNum, setLastOrderNum] = useState('#000123');
 
-  // Modal Admin
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [adminUser, setAdminUser] = useState('admin');
   const [adminPassword, setAdminPassword] = useState('1234');
 
-  // Productos
   const [products, setProducts] = useState<Producto[]>(FULL_PRODUCTS_CATALOG);
   const [filteredProducts, setFilteredProducts] = useState<Producto[]>(FULL_PRODUCTS_CATALOG);
   const [searchQuery, setSearchQuery] = useState('');
@@ -235,9 +234,7 @@ export default function HomeScreen() {
     let result = products.filter(item => normalizeText(item.categoria) !== 'rosquillas');
 
     if (selectedCategory !== 'Todos') {
-      result = result.filter(
-        (item) => normalizeText(item.categoria) === normalizeText(selectedCategory)
-      );
+      result = result.filter((item) => matchesCategory(item.categoria, selectedCategory));
     }
 
     if (searchQuery.trim() !== '') {
@@ -249,7 +246,6 @@ export default function HomeScreen() {
     setFilteredProducts(result);
   }, [searchQuery, selectedCategory, products]);
 
-  // Carrito
   const addToCart = (product: Producto) => {
     setCartItems(prev => {
       const existing = prev.find(item => item.product.id === product.id);
@@ -288,7 +284,7 @@ export default function HomeScreen() {
   const subtotal = cartItems.reduce((sum, item) => {
     const price = typeof item.product.precio === 'number'
       ? item.product.precio
-      : parseFloat(item.product.precio as string) || 0;
+      : parseFloat(item.product.precio as string || '0') || 0;
     return sum + price * item.quantity;
   }, 0);
 
@@ -336,37 +332,6 @@ export default function HomeScreen() {
     const randomOrder = `#000${Math.floor(100 + Math.random() * 900)}`;
     setLastOrderNum(randomOrder);
     setCurrentScreen('confirmacion');
-  };
-
-  const RenderProductCard = ({ item }: { item: Producto }) => {
-    const numPrice = typeof item.precio === 'number' ? item.precio : parseFloat(item.precio as string) || 0;
-    const finalImgUri = getGuaranteedBakeryImage(item.nombre, item.categoria);
-
-    return (
-      <View style={[styles.card, { width: cardWidth }]}>
-        <Image
-          source={{ uri: finalImgUri }}
-          style={styles.productImage}
-          resizeMode="cover"
-        />
-        <View style={styles.cardContent}>
-          <Text style={styles.productCategory}>{item.categoria || 'Pan'}</Text>
-          <Text style={styles.productName} numberOfLines={1}>
-            {item.nombre || 'Producto'}
-          </Text>
-          <View style={styles.cardFooter}>
-            <Text style={styles.productPrice}>L. {numPrice.toFixed(2)}</Text>
-            <TouchableOpacity 
-              style={styles.addButton} 
-              onPress={() => addToCart(item)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.addButtonText}>+</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    );
   };
 
   if (currentScreen === 'bienvenida') {
@@ -797,11 +762,13 @@ export default function HomeScreen() {
             {products.map(p => {
               const imgUri = getGuaranteedBakeryImage(p.nombre, p.categoria);
               return (
-                <View key={p.id} style={styles.adminItemRow}>
+                <View key={p.id?.toString() || Math.random().toString()} style={styles.adminItemRow}>
                   <Image source={{ uri: imgUri }} style={styles.adminItemImage} />
                   <View style={{ flex: 1, marginLeft: 10 }}>
                     <Text style={styles.adminItemName}>{p.nombre}</Text>
-                    <Text style={styles.adminItemPrice}>L. {typeof p.precio === 'number' ? p.precio.toFixed(2) : p.precio}</Text>
+                    <Text style={styles.adminItemPrice}>
+                      L. {typeof p.precio === 'number' ? p.precio.toFixed(2) : parseFloat(p.precio as string || '0').toFixed(2)}
+                    </Text>
                   </View>
                   <TouchableOpacity style={styles.editBtn}>
                     <Text style={styles.editBtnText}>Editar</Text>
@@ -922,11 +889,11 @@ export default function HomeScreen() {
                 {cartItems.map((item) => {
                   const itemPrice = typeof item.product.precio === 'number'
                     ? item.product.precio
-                    : parseFloat(item.product.precio as string) || 0;
+                    : parseFloat(item.product.precio as string || '0') || 0;
                   const itemImg = getGuaranteedBakeryImage(item.product.nombre, item.product.categoria);
 
                   return (
-                    <View key={item.product.id} style={styles.cartItemRow}>
+                    <View key={item.product.id?.toString() || Math.random().toString()} style={styles.cartItemRow}>
                       <Image source={{ uri: itemImg }} style={styles.cartItemImage} />
                       <View style={styles.cartItemDetails}>
                         <Text style={styles.cartItemName}>{item.product.nombre || 'Producto'}</Text>
@@ -971,7 +938,36 @@ export default function HomeScreen() {
             <FlatList
               data={filteredProducts}
               keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-              renderItem={({ item }) => <RenderProductCard item={item} />}
+              renderItem={({ item }) => {
+                const numPrice = typeof item.precio === 'number' ? item.precio : parseFloat(item.precio as string || '0') || 0;
+                const finalImgUri = getGuaranteedBakeryImage(item.nombre, item.categoria);
+
+                return (
+                  <View style={[styles.card, { width: cardWidth }]}>
+                    <Image
+                      source={{ uri: finalImgUri }}
+                      style={styles.productImage}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.cardContent}>
+                      <Text style={styles.productCategory}>{item.categoria || 'Pan'}</Text>
+                      <Text style={styles.productName} numberOfLines={1}>
+                        {item.nombre || 'Producto'}
+                      </Text>
+                      <View style={styles.cardFooter}>
+                        <Text style={styles.productPrice}>L. {numPrice.toFixed(2)}</Text>
+                        <TouchableOpacity 
+                          style={styles.addButton} 
+                          onPress={() => addToCart(item)}
+                          activeOpacity={0.8}
+                        >
+                          <Text style={styles.addButtonText}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                );
+              }}
               numColumns={2}
               columnWrapperStyle={styles.rowWrapper}
               contentContainerStyle={styles.gridContainer}
@@ -1032,7 +1028,7 @@ export default function HomeScreen() {
               }
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>No hay productos disponibles.</Text>
+                  <Text style={styles.emptyText}>No hay productos disponibles en esta categoría.</Text>
                 </View>
               }
             />
@@ -1108,7 +1104,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   welcomeBannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(91, 50, 27, 0.25)',
   },
   welcomeContentContainer: {
