@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   Image,
+  ImageSourcePropType,
   SafeAreaView,
   StatusBar,
   ScrollView,
@@ -29,6 +30,7 @@ interface Producto {
   precio?: number | string;
   categoria?: string;
   imagen_url?: string;
+  imagen_local?: ImageSourcePropType;
 }
 
 interface CartItem {
@@ -66,77 +68,127 @@ const matchesCategory = (itemCat?: string, targetCat?: string): boolean => {
   return c1.includes(c2) || c2.includes(c1);
 };
 
-const GUARANTEED_IMAGES: Record<string, string> = {
-  // Panes (Pan de ajo actualizado)
-  'pan casero': 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'semita de yema': 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'semita': 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'panes / croissants': 'https://images.pexels.com/photos/3892469/pexels-photo-3892469.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'croissants': 'https://images.pexels.com/photos/3892469/pexels-photo-3892469.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'pan de molde artesanal': 'https://images.pexels.com/photos/1586947/pexels-photo-1586947.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'pan integral': 'https://images.pexels.com/photos/1756062/pexels-photo-1756062.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'pan de ajo': 'https://images.pexels.com/photos/6287522/pexels-photo-6287522.jpeg?auto=compress&cs=tinysrgb&w=600',
+// ============================================================================
+// DICCIONARIO DE IMÁGENES
+// Para usar tus propias fotos guardadas en assets/images/, cambia { uri: '...' }
+// por: require('../assets/images/tu-foto.jpg')
+// ============================================================================
+const PRODUCT_IMAGES: Record<string, ImageSourcePropType> = {
+  // Panes
+  'pan casero': { uri: 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'semita de yema': { uri: 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'semita': { uri: 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'panes / croissants': { uri: 'https://images.pexels.com/photos/3892469/pexels-photo-3892469.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'croissants': { uri: 'https://images.pexels.com/photos/3892469/pexels-photo-3892469.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'pan de molde artesanal': { uri: 'https://images.pexels.com/photos/1586947/pexels-photo-1586947.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'pan integral': { uri: 'https://images.pexels.com/photos/1756062/pexels-photo-1756062.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'pan de ajo': { uri: 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=600' },
 
-  // Repostería (Imágenes actualizadas según tus links)
-  'quesadilla hondurena': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'quesadilla': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'pastel de chocolate': 'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'empanada de pina': 'https://images.pexels.com/photos/2955819/pexels-photo-2955819.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'empanada': 'https://images.pexels.com/photos/2955819/pexels-photo-2955819.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'dona glaseada': 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'dona': 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de minimo (banano)': 'https://images.pexels.com/photos/830894/pexels-photo-830894.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de minimo': 'https://images.pexels.com/photos/830894/pexels-photo-830894.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de queso': 'https://images.pexels.com/photos/4051662/pexels-photo-4051662.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de zanahoria': 'https://images.pexels.com/photos/1070850/pexels-photo-1070850.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de elote': 'https://images.pexels.com/photos/6287528/pexels-photo-6287528.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de mantequilla': 'https://images.pexels.com/photos/2067396/pexels-photo-2067396.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de levadura': 'https://images.pexels.com/photos/209206/pexels-photo-209206.jpeg?auto=compress&cs=tinysrgb&w=600',
+  // Repostería
+  'quesadilla hondurena': { uri: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'quesadilla': { uri: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'pastel de chocolate': { uri: 'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'empanada de pina': { uri: 'https://images.pexels.com/photos/2955819/pexels-photo-2955819.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'empanada': { uri: 'https://images.pexels.com/photos/2955819/pexels-photo-2955819.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'dona glaseada': { uri: 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'dona': { uri: 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'torta de minimo (banano)': { uri: 'https://images.pexels.com/photos/830894/pexels-photo-830894.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'torta de minimo': { uri: 'https://images.pexels.com/photos/830894/pexels-photo-830894.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'torta de queso': { uri: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'torta de zanahoria': { uri: 'https://images.pexels.com/photos/1070850/pexels-photo-1070850.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'torta de elote': { uri: 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'torta de mantequilla': { uri: 'https://images.pexels.com/photos/2067396/pexels-photo-2067396.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'torta de levadura': { uri: 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=600' },
 
   // Bebidas & Tragos
-  'cafe capuchino caliente': 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'chocolate caliente': 'https://images.pexels.com/photos/373639/pexels-photo-373639.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'cafe helado (iced latte)': 'https://images.pexels.com/photos/2615323/pexels-photo-2615323.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'jugo natural de naranja': 'https://images.pexels.com/photos/1337825/pexels-photo-1337825.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'horchata hondurena': 'https://images.pexels.com/photos/1233319/pexels-photo-1233319.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'granita de cafe espresso': 'https://images.pexels.com/photos/1193335/pexels-photo-1193335.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'licuado de banano con leche': 'https://images.pexels.com/photos/103566/pexels-photo-103566.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'te helado de durazno': 'https://images.pexels.com/photos/792613/pexels-photo-792613.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'mojito artesanal con menta': 'https://images.pexels.com/photos/409635/pexels-photo-409635.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'margarita de la casa': 'https://images.pexels.com/photos/1189257/pexels-photo-1189257.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'cerveza artesanal de trigo': 'https://images.pexels.com/photos/1552630/pexels-photo-1552630.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'ron con cola (cuba libre)': 'https://images.pexels.com/photos/605408/pexels-photo-605408.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'cafe capuchino caliente': { uri: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'chocolate caliente': { uri: 'https://images.pexels.com/photos/373639/pexels-photo-373639.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'cafe helado (iced latte)': { uri: 'https://images.pexels.com/photos/2615323/pexels-photo-2615323.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'jugo natural de naranja': { uri: 'https://images.pexels.com/photos/1337825/pexels-photo-1337825.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'horchata hondurena': { uri: 'https://images.pexels.com/photos/1233319/pexels-photo-1233319.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'granita de cafe espresso': { uri: 'https://images.pexels.com/photos/1193335/pexels-photo-1193335.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'licuado de banano con leche': { uri: 'https://images.pexels.com/photos/103566/pexels-photo-103566.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'te helado de durazno': { uri: 'https://images.pexels.com/photos/792613/pexels-photo-792613.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'mojito artesanal con menta': { uri: 'https://images.pexels.com/photos/409635/pexels-photo-409635.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'margarita de la casa': { uri: 'https://images.pexels.com/photos/1189257/pexels-photo-1189257.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'cerveza artesanal de trigo': { uri: 'https://images.pexels.com/photos/1552630/pexels-photo-1552630.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'ron con cola (cuba libre)': { uri: 'https://images.pexels.com/photos/605408/pexels-photo-605408.jpeg?auto=compress&cs=tinysrgb&w=600' },
 
-  // Despensa (Café molido gourmet en bolsa / molido natural)
-  'cafe en grano (1 lb)': 'https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'cafe molido gourmet (1 lb)': 'https://images.pexels.com/photos/373888/pexels-photo-373888.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'miel de abeja pura': 'https://images.pexels.com/photos/33260/honey-sweet-syrup-organic.jpg?auto=compress&cs=tinysrgb&w=600',
-  'curcuma organica molida': 'https://images.pexels.com/photos/1340116/pexels-photo-1340116.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'cacao & chocolate artesanal': 'https://images.pexels.com/photos/65882/chocolate-dark-coffee-confiserie-65882.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'pinol de maiz (1 lb)': 'https://images.pexels.com/photos/691114/pexels-photo-691114.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'chocolate de cacao en polvo (1 lb)': 'https://images.pexels.com/photos/918327/pexels-photo-918327.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'dulces de tamarindo con chile': 'https://images.pexels.com/photos/4016579/pexels-photo-4016579.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'atado de dulce de rapadura': 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=600',
+  // Despensa
+  'cafe en grano (1 lb)': { uri: 'https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'cafe molido gourmet (1 lb)': { uri: 'https://images.pexels.com/photos/373888/pexels-photo-373888.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'miel de abeja pura': { uri: 'https://images.pexels.com/photos/33260/honey-sweet-syrup-organic.jpg?auto=compress&cs=tinysrgb&w=600' },
+  'curcuma organica molida': { uri: 'https://images.pexels.com/photos/1340116/pexels-photo-1340116.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'cacao & chocolate artesanal': { uri: 'https://images.pexels.com/photos/65882/chocolate-dark-coffee-confiserie-65882.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'pinol de maiz (1 lb)': { uri: 'https://images.pexels.com/photos/691114/pexels-photo-691114.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'chocolate de cacao en polvo (1 lb)': { uri: 'https://images.pexels.com/photos/918327/pexels-photo-918327.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'dulces de tamarindo con chile': { uri: 'https://images.pexels.com/photos/4016579/pexels-photo-4016579.jpeg?auto=compress&cs=tinysrgb&w=600' },
+  'atado de dulce de rapadura': { uri: 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=600' },
+};
+
+const FALLBACK_BAKERY_IMAGE: ImageSourcePropType = {
+  uri: 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=600',
 };
 
 const HERO_BANNER_IMG = 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=800';
 const WELCOME_HEADER_IMG = 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=800';
 
-const getGuaranteedBakeryImage = (nombre?: string, categoria?: string): string => {
-  const normName = normalizeText(nombre);
-  const normCat = normalizeText(categoria);
+const isDirectImageUrl = (url?: string): boolean => {
+  if (!url) return false;
+  const clean = url.trim().toLowerCase();
+  if (!clean.startsWith('http')) return false;
+  if (clean.includes('instagram.com/p/') || clean.includes('facebook.com/')) return false;
+  return true;
+};
 
-  for (const key of Object.keys(GUARANTEED_IMAGES)) {
+const getProductImageSource = (item: Producto): ImageSourcePropType => {
+  if (item.imagen_local) {
+    return item.imagen_local;
+  }
+
+  if (isDirectImageUrl(item.imagen_url)) {
+    return { uri: item.imagen_url!.trim() };
+  }
+
+  const normName = normalizeText(item.nombre);
+  if (PRODUCT_IMAGES[normName]) {
+    return PRODUCT_IMAGES[normName];
+  }
+
+  for (const key of Object.keys(PRODUCT_IMAGES)) {
     if (normName.includes(key)) {
-      return GUARANTEED_IMAGES[key];
+      return PRODUCT_IMAGES[key];
     }
   }
 
-  if (normCat.includes('bebida')) return GUARANTEED_IMAGES['cafe capuchino caliente'];
-  if (normCat.includes('despensa')) return GUARANTEED_IMAGES['cafe molido gourmet (1 lb)'];
-  if (normCat.includes('reposter')) return GUARANTEED_IMAGES['quesadilla hondurena'];
+  const normCat = normalizeText(item.categoria);
+  if (normCat.includes('bebida')) return PRODUCT_IMAGES['cafe capuchino caliente'];
+  if (normCat.includes('despensa')) return PRODUCT_IMAGES['cafe molido gourmet (1 lb)'];
+  if (normCat.includes('reposter')) return PRODUCT_IMAGES['quesadilla hondurena'];
 
-  return GUARANTEED_IMAGES['pan casero'];
+  return FALLBACK_BAKERY_IMAGE;
+};
+
+const SafeProductImage = ({
+  item,
+  style,
+}: {
+  item: Producto;
+  style: any;
+}) => {
+  const [failed, setFailed] = useState(false);
+  const source = failed ? FALLBACK_BAKERY_IMAGE : getProductImageSource(item);
+
+  return (
+    <Image
+      source={source}
+      style={style}
+      resizeMode="cover"
+      onError={() => {
+        if (!failed) setFailed(true);
+      }}
+    />
+  );
 };
 
 const FULL_PRODUCTS_CATALOG: Producto[] = [
@@ -242,9 +294,14 @@ export default function HomeScreen() {
       if (data && data.length > 0) {
         const filteredSupabase = data.filter(p => normalizeText(p.categoria) !== 'rosquillas');
         const merged = [...FULL_PRODUCTS_CATALOG];
-        
+
         filteredSupabase.forEach(sp => {
-          if (!merged.some(m => normalizeText(m.nombre) === normalizeText(sp.nombre))) {
+          const existingIndex = merged.findIndex(m => normalizeText(m.nombre) === normalizeText(sp.nombre));
+          if (existingIndex >= 0) {
+            if (isDirectImageUrl(sp.imagen_url)) {
+              merged[existingIndex] = { ...merged[existingIndex], imagen_url: sp.imagen_url };
+            }
+          } else {
             merged.push(sp);
           }
         });
@@ -419,7 +476,7 @@ export default function HomeScreen() {
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Iniciar Sesión - Admin</Text>
               <Text style={styles.modalHintText}>Presiona Ingresar para acceder al Panel Admin</Text>
-              
+
               <TextInput
                 style={styles.modalInput}
                 placeholder="Usuario (ej. admin)"
@@ -467,7 +524,7 @@ export default function HomeScreen() {
           </View>
 
           <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingBottom: 40 }}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.payOptionBox, paymentMethod === 'efectivo' && styles.payOptionBoxActive]}
               onPress={() => setPaymentMethod('efectivo')}
             >
@@ -478,7 +535,7 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.payOptionBox, paymentMethod === 'transferencia' && styles.payOptionBoxActive]}
               onPress={() => setPaymentMethod('transferencia')}
             >
@@ -547,7 +604,7 @@ export default function HomeScreen() {
               <Text style={styles.orderNumberValue}>{lastOrderNum}</Text>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.primaryActionButton}
               onPress={() => {
                 setCartItems([]);
@@ -578,14 +635,14 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.adminSubTabsBar}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={adminSubTab === 'directo' ? styles.adminSubTabActive : styles.adminSubTabInactive}
               onPress={() => setAdminSubTab('directo')}
             >
               <Text style={adminSubTab === 'directo' ? styles.adminSubTabTextActive : styles.adminSubTabTextInactive}>Directo</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={adminSubTab === 'trabajadores' ? styles.adminSubTabActive : styles.adminSubTabInactive}
               onPress={() => setAdminSubTab('trabajadores')}
             >
@@ -595,7 +652,7 @@ export default function HomeScreen() {
 
           {adminSubTab === 'directo' ? (
             <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.adminMenuCard}
                 onPress={() => setCurrentScreen('admin_pedidos')}
                 activeOpacity={0.85}
@@ -604,7 +661,7 @@ export default function HomeScreen() {
                 <Text style={styles.adminMenuCardText}>Pedidos</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.adminMenuCard}
                 onPress={() => setCurrentScreen('admin_ventas')}
                 activeOpacity={0.85}
@@ -613,7 +670,7 @@ export default function HomeScreen() {
                 <Text style={styles.adminMenuCardText}>Ventas</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.adminMenuCard}
                 onPress={() => setCurrentScreen('admin_reportes')}
                 activeOpacity={0.85}
@@ -622,7 +679,7 @@ export default function HomeScreen() {
                 <Text style={styles.adminMenuCardText}>Reportes</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.adminMenuCard}
                 onPress={() => setCurrentScreen('admin_config')}
                 activeOpacity={0.85}
@@ -635,7 +692,7 @@ export default function HomeScreen() {
             <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <Text style={styles.sectionTitle}>Personal de la Panadería</Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={{ backgroundColor: '#5B321B', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 12 }}
                   onPress={() => Alert.alert('Nuevo Trabajador', 'Formulario para registrar personal')}
                 >
@@ -678,7 +735,7 @@ export default function HomeScreen() {
 
           <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingBottom: 40 }}>
             <Text style={styles.sectionTitle}>Productos Más Vendidos</Text>
-            
+
             <View style={styles.reportItemCard}>
               <Text style={styles.reportItemName}>1. Semita de Yema</Text>
               <Text style={styles.reportItemStat}>120 unidades vendidas</Text>
@@ -701,7 +758,7 @@ export default function HomeScreen() {
               <Text style={styles.reportSummaryText}>• Miel & Manteca: Reabastecido</Text>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.confirmOrderButton}
               onPress={() => Alert.alert('Descarga exitosa', 'El reporte general en PDF ha sido exportado.')}
             >
@@ -766,7 +823,7 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.confirmOrderButton}
               onPress={() => Alert.alert('Configuración Guardada', 'Se han actualizado los parámetros de la tienda.')}
             >
@@ -791,23 +848,20 @@ export default function HomeScreen() {
           </View>
 
           <ScrollView style={{ flex: 1, paddingHorizontal: 20, paddingTop: 16 }}>
-            {products.map(p => {
-              const imgUri = getGuaranteedBakeryImage(p.nombre, p.categoria);
-              return (
-                <View key={p.id?.toString() || Math.random().toString()} style={styles.adminItemRow}>
-                  <Image source={{ uri: imgUri }} style={styles.adminItemImage} />
-                  <View style={{ flex: 1, marginLeft: 10 }}>
-                    <Text style={styles.adminItemName}>{p.nombre}</Text>
-                    <Text style={styles.adminItemPrice}>
-                      L. {typeof p.precio === 'number' ? p.precio.toFixed(2) : parseFloat(p.precio as string || '0').toFixed(2)}
-                    </Text>
-                  </View>
-                  <TouchableOpacity style={styles.editBtn}>
-                    <Text style={styles.editBtnText}>Editar</Text>
-                  </TouchableOpacity>
+            {products.map(p => (
+              <View key={p.id?.toString() || Math.random().toString()} style={styles.adminItemRow}>
+                <SafeProductImage item={p} style={styles.adminItemImage} />
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={styles.adminItemName}>{p.nombre}</Text>
+                  <Text style={styles.adminItemPrice}>
+                    L. {typeof p.precio === 'number' ? p.precio.toFixed(2) : parseFloat(p.precio as string || '0').toFixed(2)}
+                  </Text>
                 </View>
-              );
-            })}
+                <TouchableOpacity style={styles.editBtn}>
+                  <Text style={styles.editBtnText}>Editar</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
           </ScrollView>
         </View>
       </SafeAreaView>
@@ -922,11 +976,10 @@ export default function HomeScreen() {
                   const itemPrice = typeof item.product.precio === 'number'
                     ? item.product.precio
                     : parseFloat(item.product.precio as string || '0') || 0;
-                  const itemImg = getGuaranteedBakeryImage(item.product.nombre, item.product.categoria);
 
                   return (
                     <View key={item.product.id?.toString() || Math.random().toString()} style={styles.cartItemRow}>
-                      <Image source={{ uri: itemImg }} style={styles.cartItemImage} />
+                      <SafeProductImage item={item.product} style={styles.cartItemImage} />
                       <View style={styles.cartItemDetails}>
                         <Text style={styles.cartItemName}>{item.product.nombre || 'Producto'}</Text>
                         <Text style={styles.cartItemUnitPrice}>L. {itemPrice.toFixed(2)}</Text>
@@ -972,15 +1025,10 @@ export default function HomeScreen() {
               keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
               renderItem={({ item }) => {
                 const numPrice = typeof item.precio === 'number' ? item.precio : parseFloat(item.precio as string || '0') || 0;
-                const finalImgUri = getGuaranteedBakeryImage(item.nombre, item.categoria);
 
                 return (
                   <View style={[styles.card, { width: cardWidth }]}>
-                    <Image
-                      source={{ uri: finalImgUri }}
-                      style={styles.productImage}
-                      resizeMode="cover"
-                    />
+                    <SafeProductImage item={item} style={styles.productImage} />
                     <View style={styles.cardContent}>
                       <Text style={styles.productCategory}>{item.categoria || 'Pan'}</Text>
                       <Text style={styles.productName} numberOfLines={1}>
@@ -988,8 +1036,8 @@ export default function HomeScreen() {
                       </Text>
                       <View style={styles.cardFooter}>
                         <Text style={styles.productPrice}>L. {numPrice.toFixed(2)}</Text>
-                        <TouchableOpacity 
-                          style={styles.addButton} 
+                        <TouchableOpacity
+                          style={styles.addButton}
                           onPress={() => addToCart(item)}
                           activeOpacity={0.8}
                         >
@@ -1272,7 +1320,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 130,
     marginBottom: 16,
-    justify: 'flex-end',
+    justifyContent: 'flex-end',
     overflow: 'hidden',
   },
   heroOverlay: {
@@ -1280,7 +1328,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 18,
     height: '100%',
-    justify: 'center',
+    justifyContent: 'center',
   },
   heroBadge: {
     color: '#E8B565',
@@ -1613,7 +1661,7 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     backgroundColor: '#D9764A',
-    justify: 'center',
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
@@ -1825,7 +1873,7 @@ const styles = StyleSheet.create({
   },
   toggleRow: {
     flexDirection: 'row',
-    justify: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
@@ -1842,7 +1890,7 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    justify: 'space-between',
+    justifyContent: 'space-between',
   },
   ventasTitle: {
     fontSize: 20,
@@ -1893,7 +1941,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
-    justify: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E8D2C1',
@@ -1919,7 +1967,7 @@ const styles = StyleSheet.create({
   },
   chartBarsRow: {
     flexDirection: 'row',
-    justify: 'space-between',
+    justifyContent: 'space-between',
     alignItems: 'flex-end',
     height: 150,
     paddingBottom: 10,
@@ -1933,7 +1981,7 @@ const styles = StyleSheet.create({
   },
   chartLabelsRow: {
     flexDirection: 'row',
-    justify: 'space-between',
+    justifyContent: 'space-between',
     marginTop: 10,
   },
   chartLabel: {
@@ -1985,13 +2033,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E8D2C1',
     flexDirection: 'row',
-    justify: 'space-around',
+    justifyContent: 'space-around',
     alignItems: 'center',
     width: '100%',
   },
   tabItem: {
     alignItems: 'center',
-    justify: 'center',
+    justifyContent: 'center',
   },
   tabIcon: {
     fontSize: 18,
@@ -2021,7 +2069,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justify: 'center',
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
