@@ -59,13 +59,54 @@ const matchesCategory = (itemCat?: string, targetCat?: string): boolean => {
   const c1 = normalizeText(itemCat);
   const c2 = normalizeText(targetCat);
 
+  if (!c1) return false;
   if (c1 === c2) return true;
-  if (c2 === 'bebidas' && (c1.includes('bebida') || c1.includes('jugo') || c1.includes('cafe') || c1.includes('chocolate') || c1.includes('trago') || c1.includes('coctel') || c1.includes('licuado') || c1.includes('cerveza') || c1.includes('te'))) return true;
-  if (c2 === 'despensa' && (c1.includes('despensa') || c1.includes('grano') || c1.includes('miel') || c1.includes('curcuma') || c1.includes('pinol') || c1.includes('polvo') || c1.includes('dulce') || c1.includes('tamarindo'))) return true;
-  if (c2 === 'pan' && (c1.includes('pan') || c1.includes('semita') || c1.includes('croissant'))) return true;
-  if (c2 === 'reposteria' && (c1.includes('reposter') || c1.includes('empanada') || c1.includes('dona') || c1.includes('pastel') || c1.includes('torta') || c1.includes('quesadilla'))) return true;
 
-  return c1.includes(c2) || c2.includes(c1);
+  if (c2 === 'bebidas') {
+    if (c1.includes('reposter') || c1.includes('pastel') || c1.includes('torta')) return false;
+    return (
+      c1.includes('bebida') ||
+      c1.includes('jugo') ||
+      c1.includes('cafe') ||
+      c1.includes('chocolate') ||
+      c1.includes('trago') ||
+      c1.includes('coctel') ||
+      c1.includes('licuado') ||
+      c1.includes('cerveza') ||
+      /\bte\b/.test(c1)
+    );
+  }
+
+  if (c2 === 'despensa') {
+    return (
+      c1.includes('despensa') ||
+      c1.includes('grano') ||
+      c1.includes('miel') ||
+      c1.includes('curcuma') ||
+      c1.includes('pinol') ||
+      c1.includes('polvo') ||
+      c1.includes('dulce') ||
+      c1.includes('tamarindo')
+    );
+  }
+
+  if (c2 === 'pan') {
+    if (c1.includes('empanada')) return false;
+    return c1.includes('pan') || c1.includes('semita') || c1.includes('croissant');
+  }
+
+  if (c2 === 'reposteria') {
+    return (
+      c1.includes('reposter') ||
+      c1.includes('empanada') ||
+      c1.includes('dona') ||
+      c1.includes('pastel') ||
+      c1.includes('torta') ||
+      c1.includes('quesadilla')
+    );
+  }
+
+  return c1.includes(c2);
 };
 
 // ============================================================================
