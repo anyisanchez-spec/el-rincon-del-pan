@@ -58,8 +58,8 @@ const matchesCategory = (itemCat?: string, targetCat?: string): boolean => {
   const c2 = normalizeText(targetCat);
 
   if (c1 === c2) return true;
-  if (c2 === 'bebidas' && (c1.includes('bebida') || c1.includes('jugo') || c1.includes('cafe') || c1.includes('chocolate'))) return true;
-  if (c2 === 'despensa' && (c1.includes('despensa') || c1.includes('grano') || c1.includes('miel') || c1.includes('curcuma'))) return true;
+  if (c2 === 'bebidas' && (c1.includes('bebida') || c1.includes('jugo') || c1.includes('cafe') || c1.includes('chocolate') || c1.includes('trago') || c1.includes('coctel') || c1.includes('licuado') || c1.includes('cerveza') || c1.includes('te'))) return true;
+  if (c2 === 'despensa' && (c1.includes('despensa') || c1.includes('grano') || c1.includes('miel') || c1.includes('curcuma') || c1.includes('pinol') || c1.includes('polvo') || c1.includes('dulce') || c1.includes('tamarindo'))) return true;
   if (c2 === 'pan' && (c1.includes('pan') || c1.includes('semita') || c1.includes('croissant'))) return true;
   if (c2 === 'reposteria' && (c1.includes('reposter') || c1.includes('empanada') || c1.includes('dona') || c1.includes('pastel') || c1.includes('torta') || c1.includes('quesadilla'))) return true;
 
@@ -67,40 +67,56 @@ const matchesCategory = (itemCat?: string, targetCat?: string): boolean => {
 };
 
 const GUARANTEED_IMAGES: Record<string, string> = {
+  // Panes (Pan de ajo actualizado)
   'pan casero': 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'semita de yema': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
-  'semita': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
+  'semita de yema': 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'semita': 'https://images.pexels.com/photos/205961/pexels-photo-205961.jpeg?auto=compress&cs=tinysrgb&w=600',
   'panes / croissants': 'https://images.pexels.com/photos/3892469/pexels-photo-3892469.jpeg?auto=compress&cs=tinysrgb&w=600',
   'croissants': 'https://images.pexels.com/photos/3892469/pexels-photo-3892469.jpeg?auto=compress&cs=tinysrgb&w=600',
   'pan de molde artesanal': 'https://images.pexels.com/photos/1586947/pexels-photo-1586947.jpeg?auto=compress&cs=tinysrgb&w=600',
   'pan integral': 'https://images.pexels.com/photos/1756062/pexels-photo-1756062.jpeg?auto=compress&cs=tinysrgb&w=600',
   'pan de ajo': 'https://images.pexels.com/photos/6287522/pexels-photo-6287522.jpeg?auto=compress&cs=tinysrgb&w=600',
 
+  // Repostería (Imágenes actualizadas según tus links)
   'quesadilla hondurena': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
   'quesadilla': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
   'pastel de chocolate': 'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'empanada de pina': 'https://images.unsplash.com/photo-1621996346565-e3d5d6281288?q=80&w=600&auto=format&fit=crop',
-  'empanada': 'https://images.unsplash.com/photo-1621996346565-e3d5d6281288?q=80&w=600&auto=format&fit=crop',
+  'empanada de pina': 'https://images.pexels.com/photos/2955819/pexels-photo-2955819.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'empanada': 'https://images.pexels.com/photos/2955819/pexels-photo-2955819.jpeg?auto=compress&cs=tinysrgb&w=600',
   'dona glaseada': 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=600',
   'dona': 'https://images.pexels.com/photos/3338681/pexels-photo-3338681.jpeg?auto=compress&cs=tinysrgb&w=600',
   'torta de minimo (banano)': 'https://images.pexels.com/photos/830894/pexels-photo-830894.jpeg?auto=compress&cs=tinysrgb&w=600',
   'torta de minimo': 'https://images.pexels.com/photos/830894/pexels-photo-830894.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de queso': 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de zanahoria': 'https://images.pexels.com/photos/14107/pexels-photo-14107.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de elote': 'https://images.pexels.com/photos/709841/pexels-photo-709841.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de mantequilla': 'https://images.pexels.com/photos/1055272/pexels-photo-1055272.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'torta de levadura': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600&auto=format&fit=crop',
+  'torta de queso': 'https://images.pexels.com/photos/4051662/pexels-photo-4051662.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de zanahoria': 'https://images.pexels.com/photos/1070850/pexels-photo-1070850.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de elote': 'https://images.pexels.com/photos/6287528/pexels-photo-6287528.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de mantequilla': 'https://images.pexels.com/photos/2067396/pexels-photo-2067396.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'torta de levadura': 'https://images.pexels.com/photos/209206/pexels-photo-209206.jpeg?auto=compress&cs=tinysrgb&w=600',
 
+  // Bebidas & Tragos
   'cafe capuchino caliente': 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=600',
   'chocolate caliente': 'https://images.pexels.com/photos/373639/pexels-photo-373639.jpeg?auto=compress&cs=tinysrgb&w=600',
   'cafe helado (iced latte)': 'https://images.pexels.com/photos/2615323/pexels-photo-2615323.jpeg?auto=compress&cs=tinysrgb&w=600',
   'jugo natural de naranja': 'https://images.pexels.com/photos/1337825/pexels-photo-1337825.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'horchata hondurena': 'https://images.pexels.com/photos/1233319/pexels-photo-1233319.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'granita de cafe espresso': 'https://images.pexels.com/photos/1193335/pexels-photo-1193335.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'licuado de banano con leche': 'https://images.pexels.com/photos/103566/pexels-photo-103566.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'te helado de durazno': 'https://images.pexels.com/photos/792613/pexels-photo-792613.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'mojito artesanal con menta': 'https://images.pexels.com/photos/409635/pexels-photo-409635.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'margarita de la casa': 'https://images.pexels.com/photos/1189257/pexels-photo-1189257.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'cerveza artesanal de trigo': 'https://images.pexels.com/photos/1552630/pexels-photo-1552630.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'ron con cola (cuba libre)': 'https://images.pexels.com/photos/605408/pexels-photo-605408.jpeg?auto=compress&cs=tinysrgb&w=600',
 
+  // Despensa (Café molido gourmet en bolsa / molido natural)
   'cafe en grano (1 lb)': 'https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=600',
-  'cafe molido gourmet (1 lb)': 'https://images.pexels.com/photos/585750/pexels-photo-585750.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'cafe molido gourmet (1 lb)': 'https://images.pexels.com/photos/373888/pexels-photo-373888.jpeg?auto=compress&cs=tinysrgb&w=600',
   'miel de abeja pura': 'https://images.pexels.com/photos/33260/honey-sweet-syrup-organic.jpg?auto=compress&cs=tinysrgb&w=600',
   'curcuma organica molida': 'https://images.pexels.com/photos/1340116/pexels-photo-1340116.jpeg?auto=compress&cs=tinysrgb&w=600',
   'cacao & chocolate artesanal': 'https://images.pexels.com/photos/65882/chocolate-dark-coffee-confiserie-65882.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'pinol de maiz (1 lb)': 'https://images.pexels.com/photos/691114/pexels-photo-691114.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'chocolate de cacao en polvo (1 lb)': 'https://images.pexels.com/photos/918327/pexels-photo-918327.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'dulces de tamarindo con chile': 'https://images.pexels.com/photos/4016579/pexels-photo-4016579.jpeg?auto=compress&cs=tinysrgb&w=600',
+  'atado de dulce de rapadura': 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg?auto=compress&cs=tinysrgb&w=600',
 };
 
 const HERO_BANNER_IMG = 'https://images.pexels.com/photos/1775043/pexels-photo-1775043.jpeg?auto=compress&cs=tinysrgb&w=800';
@@ -117,13 +133,14 @@ const getGuaranteedBakeryImage = (nombre?: string, categoria?: string): string =
   }
 
   if (normCat.includes('bebida')) return GUARANTEED_IMAGES['cafe capuchino caliente'];
-  if (normCat.includes('despensa')) return GUARANTEED_IMAGES['cafe en grano (1 lb)'];
+  if (normCat.includes('despensa')) return GUARANTEED_IMAGES['cafe molido gourmet (1 lb)'];
   if (normCat.includes('reposter')) return GUARANTEED_IMAGES['quesadilla hondurena'];
 
   return GUARANTEED_IMAGES['pan casero'];
 };
 
 const FULL_PRODUCTS_CATALOG: Producto[] = [
+  // Pan
   { id: 'p1', nombre: 'Pan Casero', precio: 15.00, categoria: 'Pan' },
   { id: 'p2', nombre: 'Semita de Yema', precio: 15.00, categoria: 'Pan' },
   { id: 'p3', nombre: 'Panes / Croissants', precio: 12.00, categoria: 'Pan' },
@@ -131,6 +148,7 @@ const FULL_PRODUCTS_CATALOG: Producto[] = [
   { id: 'p5', nombre: 'Pan Integral', precio: 22.00, categoria: 'Pan' },
   { id: 'p6', nombre: 'Pan de Ajo', precio: 25.00, categoria: 'Pan' },
 
+  // Repostería
   { id: 'p7', nombre: 'Quesadilla Hondureña', precio: 25.00, categoria: 'Repostería' },
   { id: 'p8', nombre: 'Pastel de Chocolate', precio: 45.00, categoria: 'Repostería' },
   { id: 'p9', nombre: 'Empanada de Piña', precio: 18.00, categoria: 'Repostería' },
@@ -142,16 +160,30 @@ const FULL_PRODUCTS_CATALOG: Producto[] = [
   { id: 'p15', nombre: 'Torta de Mantequilla', precio: 28.00, categoria: 'Repostería' },
   { id: 'p16', nombre: 'Torta de Levadura', precio: 25.00, categoria: 'Repostería' },
 
+  // Bebidas & Tragos
   { id: 'p20', nombre: 'Café Capuchino Caliente', precio: 35.00, categoria: 'Bebidas' },
   { id: 'p21', nombre: 'Chocolate Caliente', precio: 30.00, categoria: 'Bebidas' },
   { id: 'p22', nombre: 'Café Helado (Iced Latte)', precio: 40.00, categoria: 'Bebidas' },
   { id: 'p23', nombre: 'Jugo Natural de Naranja', precio: 25.00, categoria: 'Bebidas' },
+  { id: 'p30', nombre: 'Horchata Hondureña', precio: 30.00, categoria: 'Bebidas' },
+  { id: 'p31', nombre: 'Granita de Café Espresso', precio: 45.00, categoria: 'Bebidas' },
+  { id: 'p32', nombre: 'Licuado de Banano con Leche', precio: 35.00, categoria: 'Bebidas' },
+  { id: 'p33', nombre: 'Té Helado de Durazno', precio: 28.00, categoria: 'Bebidas' },
+  { id: 'p34', nombre: 'Mojito Artesanal con Menta', precio: 80.00, categoria: 'Bebidas' },
+  { id: 'p35', nombre: 'Margarita de la Casa', precio: 75.00, categoria: 'Bebidas' },
+  { id: 'p36', nombre: 'Cerveza Artesanal de Trigo', precio: 55.00, categoria: 'Bebidas' },
+  { id: 'p37', nombre: 'Ron con Cola (Cuba Libre)', precio: 70.00, categoria: 'Bebidas' },
 
+  // Despensa
   { id: 'p24', nombre: 'Café en Grano (1 lb)', precio: 120.00, categoria: 'Despensa' },
   { id: 'p25', nombre: 'Café Molido Gourmet (1 lb)', precio: 110.00, categoria: 'Despensa' },
   { id: 'p26', nombre: 'Miel de Abeja Pura', precio: 90.00, categoria: 'Despensa' },
   { id: 'p27', nombre: 'Cúrcuma Orgánica Molida', precio: 65.00, categoria: 'Despensa' },
   { id: 'p28', nombre: 'Cacao & Chocolate Artesanal', precio: 75.00, categoria: 'Despensa' },
+  { id: 'p40', nombre: 'Pinol de Maíz (1 lb)', precio: 40.00, categoria: 'Despensa' },
+  { id: 'p41', nombre: 'Chocolate de Cacao en Polvo (1 lb)', precio: 65.00, categoria: 'Despensa' },
+  { id: 'p42', nombre: 'Dulces de Tamarindo con Chile', precio: 35.00, categoria: 'Despensa' },
+  { id: 'p43', nombre: 'Atado de Dulce de Rapadura', precio: 30.00, categoria: 'Despensa' },
 ];
 
 export default function HomeScreen() {
@@ -1240,7 +1272,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 130,
     marginBottom: 16,
-    justifyContent: 'flex-end',
+    justify: 'flex-end',
     overflow: 'hidden',
   },
   heroOverlay: {
@@ -1248,7 +1280,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 18,
     height: '100%',
-    justifyContent: 'center',
+    justify: 'center',
   },
   heroBadge: {
     color: '#E8B565',
@@ -1581,7 +1613,7 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     backgroundColor: '#D9764A',
-    justifyContent: 'center',
+    justify: 'center',
     alignItems: 'center',
     marginBottom: 16,
   },
@@ -1793,7 +1825,7 @@ const styles = StyleSheet.create({
   },
   toggleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justify: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
@@ -1810,7 +1842,7 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justify: 'space-between',
   },
   ventasTitle: {
     fontSize: 20,
@@ -1861,7 +1893,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justify: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E8D2C1',
@@ -1887,7 +1919,7 @@ const styles = StyleSheet.create({
   },
   chartBarsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justify: 'space-between',
     alignItems: 'flex-end',
     height: 150,
     paddingBottom: 10,
@@ -1901,7 +1933,7 @@ const styles = StyleSheet.create({
   },
   chartLabelsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justify: 'space-between',
     marginTop: 10,
   },
   chartLabel: {
@@ -1953,13 +1985,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E8D2C1',
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justify: 'space-around',
     alignItems: 'center',
     width: '100%',
   },
   tabItem: {
     alignItems: 'center',
-    justifyContent: 'center',
+    justify: 'center',
   },
   tabIcon: {
     fontSize: 18,
@@ -1989,7 +2021,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
+    justify: 'center',
     alignItems: 'center',
     padding: 20,
   },
